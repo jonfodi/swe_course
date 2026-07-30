@@ -16,6 +16,7 @@ what ds do we need to solve this?
 - decompose real world app questions into ds + a problems 
 - learn the uses of the common data strucutres 
     - HM, graph, stack, queue, heap, LL? 
+- map algorithms to app level data access questions 
 - build a generic data fetcher (DB)
     - everything well have built will be bespoke for the cyber application. optimized for the exact query but hard to maintain 
     - use this motivation to build a generic fetcher that loses the perofrmance but greatly simplifies the maintenance 
