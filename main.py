@@ -38,24 +38,40 @@ def failed_attempts_in_window(auth_logs,failed_attempts, now, window):
 # input: window 
 # output: [(src_host, dst_ip)] -> maybe a set?
 
-def malicious_ip_connections(connection_log, threat_intel, now, window):
-    res = set()
-    cutoff = now - window
+# optimizations
+# obv this loop is not ideal we can bisect it too
+# but this feels pretty straightforward
 
-    for log in connection_log:
-        timestamp, src_host, dst_ip, dst_port, bytes_sent = log
-        if timestamp <= cutoff:
-            continue
-        if dst_ip in threat_intel:
-            res.add((src_host, dst_ip))
+
+malicious_connections = defaultdict(set) # malicious_ip : [timestamp, src_host] 
+
+def record(connection_log, threat_intel):
+    timestamp, src_host, dst_ip, dst_port, bytes_sent = connection_log
+    if dst_ip in threat_intel:
+        malicious_connections[dst_ip].add((timestamp, src_host))
+
+
+def malicious_ip_connections(malicious_connections, now, window):
+    cutoff = now - window
+    res = set()
+
+    for malicious_ip, conns in malicious_connections.items():
+        for timestamp, src_host in conns
+            if timestamp <= cutoff:
+                continue
+            res.add((dest_ip, src_host))
+    
     return res
 
+    # res = set()
+    # cutoff = now - window
 
-
-
-
-    
-
-
+    # for log in connection_log:
+    #     timestamp, src_host, dst_ip, dst_port, bytes_sent = log
+    #     if timestamp <= cutoff:
+    #         continue
+    #     if dst_ip in threat_intel:
+    #         res.add((src_host, dst_ip))
+    # return res
 
 
