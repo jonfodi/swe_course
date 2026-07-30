@@ -20,3 +20,8 @@ what ds do we need to solve this?
 - build a generic data fetcher (DB)
     - everything well have built will be bespoke for the cyber application. optimized for the exact query but hard to maintain 
     - use this motivation to build a generic fetcher that loses the perofrmance but greatly simplifies the maintenance 
+
+# todo 
+- different algos on the HM 
+- new DS 
+    - graph, stack? queue? idek 
