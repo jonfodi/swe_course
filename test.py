@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from main import failed_attempts_in_window
+from main import failed_attempts_in_window, malicious_ip_connections
 
 
 NOW = datetime(2024, 1, 1, 17, 0)
@@ -24,6 +24,32 @@ auth_logs = [
     (datetime(2024, 1, 1, 16, 40), "10.0.0.5",      "alice",         True),
     (datetime(2024, 1, 1, 16, 51), "172.16.4.9",    "svc_deploy",    True),
     (datetime(2024, 1, 1, 16, 53), "172.16.4.9",    "svc_deploy",    False),
+]
+threat_intel = {
+    "45.33.32.156",
+    "185.220.101.44",
+    "91.219.236.18",
+    "194.5.249.157",
+    "5.188.206.18",
+    "103.224.182.253",
+}
+connection_log = [  # (timestamp, src_host, dst_ip, dst_port, bytes_sent)
+    (datetime(2024, 1, 1,  8, 15), "wkstn-014",    "45.33.32.156",    443,    8214),
+    (datetime(2024, 1, 1, 11, 59), "wkstn-014",    "185.220.101.44",  9001,    412),
+    (datetime(2024, 1, 1, 12,  0), "wkstn-022",    "91.219.236.18",   443,    1180),
+    (datetime(2024, 1, 1, 12, 30), "wkstn-088",    "45.33.32.156",    443,    4096),
+    (datetime(2024, 1, 1, 12, 33), "wkstn-088",    "45.33.32.156",    443,    4096),
+    (datetime(2024, 1, 1, 12, 35), "wkstn-088",    "45.33.32.156",    443,    2048),
+    (datetime(2024, 1, 1, 13,  5), "wkstn-088",    "185.220.101.44",  9001,    877),
+    (datetime(2024, 1, 1, 13, 40), "srv-db-03",    "10.0.0.200",      5432,  15300),
+    (datetime(2024, 1, 1, 14,  0), "wkstn-101",    "142.250.80.46",   443,   62100),
+    (datetime(2024, 1, 1, 14, 22), "wkstn-101",    "91.219.236.18",   8080,    633),
+    (datetime(2024, 1, 1, 15, 10), "srv-web-01",   "194.5.249.157",   443, 2884109),
+    (datetime(2024, 1, 1, 15, 11), "srv-web-01",   "194.5.249.157",   443, 4102773),
+    (datetime(2024, 1, 1, 16,  0), "wkstn-045",    "5.188.206.18",    6667,    244),
+    (datetime(2024, 1, 1, 16, 30), "wkstn-045",    "52.94.236.248",   443,   18900),
+    (datetime(2024, 1, 1, 16, 45), "wkstn-088",    "103.224.182.253", 53,      301),
+    (datetime(2024, 1, 1, 16, 59), "laptop-jfodi", "185.220.101.44",  9001,   1502),
 ]
 
 
