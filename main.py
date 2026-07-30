@@ -43,17 +43,18 @@ def failed_attempts_in_window(auth_logs,failed_attempts, now, window):
 # but this feels pretty straightforward
 
 
-malicious_connections = defaultdict(set) # malicious_ip : [timestamp, src_host] 
-
-def record(connection_log, threat_intel):
-    timestamp, src_host, dst_ip, dst_port, bytes_sent = connection_log
-    if dst_ip in threat_intel:
-        malicious_connections[dst_ip].add((timestamp, src_host))
-
-
-def malicious_ip_connections(malicious_connections, now, window):
+def malicious_ip_connections(connection_logs, threat_intel, now, window):
     cutoff = now - window
     res = set()
+
+    # we can do this at write time eventually but leave it here now for simplicity / just to demonstrate
+    malicious_connections = defaultdict(set) # malicious_ip : [timestamp, src_host] 
+
+    for log in connection_logs:
+        timestamp, src_host, dst_ip, dst_port, bytes_sent = connection_log
+        if dst_ip in threat_intel:
+            malicious_connections[dst_ip].add((timestamp, src_host))
+
 
     for malicious_ip, conns in malicious_connections.items():
         for timestamp, src_host in conns:
