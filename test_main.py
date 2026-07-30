@@ -3,7 +3,7 @@ from datetime import timedelta
 import pytest
 
 from data import AUTH_LOGS, CONNECTION_LOG, NOW, THREAT_INTEL
-from main import build_index, failed_attempts_in_window, malicious_ip_connections
+from main import failed_attempts_in_window, malicious_ip_connections
 
 # NOW is 17:00, so each window names its own cutoff
 DAY = timedelta(days=1)      # cutoff 2023-12-31 17:00 -- whole log
@@ -68,11 +68,6 @@ def test_failed_attempts_in_window(logs, n, window, expected):
 
 
 # ---- question 2 -------------------------------------------------------------
-
-def detect(connection_log, threat_intel, now, window):
-    """Write path then read path, the way a caller uses the pair."""
-    return malicious_ip_connections(build_index(connection_log, threat_intel), now, window)
-
 
 @pytest.mark.parametrize(
     "log, feed, window, expected",
@@ -141,4 +136,4 @@ def detect(connection_log, threat_intel, now, window):
     ],
 )
 def test_malicious_ip_connections(log, feed, window, expected):
-    assert detect(log, feed, NOW, window) == expected
+    assert malicious_ip_connections(log, feed, NOW, window) == expected

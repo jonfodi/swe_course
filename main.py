@@ -28,7 +28,9 @@ def failed_attempts_in_window(auth_logs,failed_attempts, now, window):
         if num_attempts >= failed_attempts:
             res.append((src_ip, num_attempts))
 
-    res.sort(key=lambda x: x[1], reverse=True)
+    # tiebreak on src_ip so the ranking is deterministic -- without it the order
+    # of equal counts falls out of dict insertion order, i.e. out of log order
+    res.sort(key=lambda x: (-x[1], x[0]))
     return res
 
 
@@ -41,8 +43,7 @@ def failed_attempts_in_window(auth_logs,failed_attempts, now, window):
 # optimizations
 # obv this loop is not ideal we can bisect it too
 # but this feels pretty straightforward
-
-
+# if we create teh data we need at write time we dont need to loop through all logs -> malicious_connections dict 
 def malicious_ip_connections(connection_logs, threat_intel, now, window):
     cutoff = now - window
     res = set()
@@ -51,7 +52,7 @@ def malicious_ip_connections(connection_logs, threat_intel, now, window):
     malicious_connections = defaultdict(set) # malicious_ip : [timestamp, src_host] 
 
     for log in connection_logs:
-        timestamp, src_host, dst_ip, dst_port, bytes_sent = connection_log
+        timestamp, src_host, dst_ip, dst_port, bytes_sent = log
         if dst_ip in threat_intel:
             malicious_connections[dst_ip].add((timestamp, src_host))
 
@@ -60,7 +61,7 @@ def malicious_ip_connections(connection_logs, threat_intel, now, window):
         for timestamp, src_host in conns:
             if timestamp <= cutoff:
                 continue
-            res.add((malicious_ip, src_host))
+            res.add((src_host, malicious_ip))
     
     return res
 
