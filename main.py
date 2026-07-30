@@ -5,7 +5,17 @@ from datetime import datetime, timedelta
 # question 1: provide every src_ip with over failed_attempts failed login attempts in a given time window 
 # auth log: (timestamp, src_ip, username, success: bool)
 
+# question 2: report all src_host that made a connection to a dest_ip in the threat_intel IP list in a given time window 
+# threat_intel = set() -> unique list of malicious IPs 
+# connection_log = (timestamp, src_host, dst_ip, dst_port, bytes_sent)
+# input: 
 
+# optimizations 
+# bisecting - right now were always looping through the whole list to create IP attempts 
+# we could sort the list and then remove all logs not in the window 
+# cost: time complexity of the sort 
+# gain: less than N iterations on auth logs
+# tiebreaker: size of auth logs (as it gets bigger, the gain outweighs the cost because else we'd be looping through the huge N)
 def failed_attempts_in_window(auth_logs,failed_attempts, now, window):
     cutoff = now - window                    # 12:00 PM
     ip_attempts = defaultdict(int) # src_ip: num_attempts 
