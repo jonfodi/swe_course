@@ -56,10 +56,10 @@ def malicious_ip_connections(malicious_connections, now, window):
     res = set()
 
     for malicious_ip, conns in malicious_connections.items():
-        for timestamp, src_host in conns
+        for timestamp, src_host in conns:
             if timestamp <= cutoff:
                 continue
-            res.add((dest_ip, src_host))
+            res.add((malicious_ip, src_host))
     
     return res
 
