@@ -18,7 +18,7 @@ def failed_attempts_in_window(auth_logs, failed_attempts, now, window):
     cutoff = now - window                    # 12:00 PM
     ip_attempts = defaultdict(int) # src_ip: num_attempts 
     res = []
-    
+
     start = bisect_left(auth_logs, cutoff, key=lambda log: log[0])
 
     for log in auth_logs[start:]:
@@ -53,7 +53,7 @@ def malicious_ip_connections(connection_logs, threat_intel, now, window):
     res = set()
 
     # we can do this at write time eventually but leave it here now for simplicity / just to demonstrate
-    malicious_connections = defaultdict(set) # malicious_ip : [timestamp, src_host] 
+    malicious_connections = defaultdict(set) # malicious_ip : [(timestamp, src_host)] 
 
     for log in connection_logs:
         timestamp, src_host, dst_ip, dst_port, bytes_sent = log
@@ -62,6 +62,7 @@ def malicious_ip_connections(connection_logs, threat_intel, now, window):
 
 
     for malicious_ip, conns in malicious_connections.items():
+        start = bisect_left(conns, cutoff, key=lambda c: c[0])
         for timestamp, src_host in conns:
             if timestamp <= cutoff:
                 continue

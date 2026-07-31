@@ -21,6 +21,8 @@ bisect_right(a, x) = first index where a[i] > x --> cutoff excluded
 
 return len(a) - bisect(a, cutoff)
 
+use key if your list is a tuple and you need to sort by a specific item in the tuple
+bisect_left(conns, cutoff, key=lambda c: c[0]) -> c[0] = first element of the tuple
 
 # ultimate goals 
 - decompose real world app questions into ds + a problems 
