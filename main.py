@@ -4,32 +4,7 @@ from bisect import bisect_right
 from cyber import Cyber 
 
 
-
-def failed_attempts_in_window(auth_logs, failed_attempts, now, window):
-    cutoff = now - window                    # 12:00 PM
-    ip_attempts = defaultdict(int) # src_ip: num_attempts 
-    res = []
-
-    start = bisect_right(auth_logs, cutoff, key=lambda log: log[0])
-
-    for log in auth_logs[start:]:
-        timestamp, src_ip, username, success = log
-        if success:
-            continue
-        ip_attempts[src_ip] += 1
-
-    # dict keys are unique which means we dont need to make res a set 
-    for src_ip, num_attempts in ip_attempts.items():
-        if num_attempts >= failed_attempts:
-            res.append((src_ip, num_attempts))
-
-    # tiebreak on src_ip so the ranking is deterministic -- without it the order
-    # of equal counts falls out of dict insertion order, i.e. out of log order
-    res.sort(key=lambda x: (-x[1], x[0]))
-    return res
-
-
-# question 2: report all src_host that made a connection to a dest_ip in the threat_intel IP list in a given time window 
+# question 2: report all src_host that made a connection to a dest_ip in the threat_intel IP list
 # threat_intel = set() -> unique list of malicious IPs 
 # connection_log = (timestamp, src_host, dst_ip, dst_port, bytes_sent)
 # input: window 
@@ -128,5 +103,21 @@ NOW = datetime(2024, 1, 1, 17, 0)
 # window = datetime(2024, 1, 1, 16, 30) # 30 min window
 # # window = datetime(2024, 1, 1, 16, 0) # 1 hour window
 window = timedelta(hours=8) # 8 hour window
-res = cyb.failed_attempts_in_window(1, NOW, window)
-print(res)
+# res = cyb.failed_attempts_in_window(1, NOW, window)
+# print(res)
+
+res2 = cyb.malicious_ip_connections()
+for src_host, malicious_ips in res2.items():
+    print(f"{src_host}:")
+    for ip in malicious_ips:
+        print(f"  {ip}")
+# {
+
+    'wkstn-014':     ['45.33.32.156', '185.220.101.44'],
+    'wkstn-022':     ['91.219.236.18'],
+    'wkstn-088':     ['45.33.32.156', '185.220.101.44', '103.224.182.253'],
+    'wkstn-101':     ['91.219.236.18'],
+    'srv-web-01':    ['194.5.249.157'],
+    'wkstn-045':     ['5.188.206.18'],
+
+# }
