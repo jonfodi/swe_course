@@ -4,48 +4,6 @@ from bisect import bisect_right
 from cyber import Cyber 
 
 
-# question 2: report all src_host that made a connection to a dest_ip in the threat_intel IP list
-# threat_intel = set() -> unique list of malicious IPs 
-# connection_log = (timestamp, src_host, dst_ip, dst_port, bytes_sent)
-# input: window 
-# output: [(src_host, dst_ip)] -> maybe a set?
-
-# optimizations
-# obv this loop is not ideal we can bisect it too
-# but this feels pretty straightforward
-# if we create teh data we need at write time we dont need to loop through all logs -> malicious_connections dict 
-def malicious_ip_connections(connection_logs, threat_intel, now, window):
-    cutoff = now - window
-    res = set()
-
-    # we can do this at write time eventually but leave it here now for simplicity / just to demonstrate
-    malicious_connections = defaultdict(set) # malicious_ip : [(timestamp, src_host)] 
-
-    for log in connection_logs:
-        timestamp, src_host, dst_ip, dst_port, bytes_sent = log
-        if dst_ip in threat_intel:
-            malicious_connections[dst_ip].add((timestamp, src_host))
-
-
-    for malicious_ip, conns in malicious_connections.items():
-        for timestamp, src_host in conns:
-            if timestamp <= cutoff:
-                continue
-            res.add((src_host, malicious_ip))
-    
-    return res
-
-    # res = set()
-    # cutoff = now - window
-
-    # for log in connection_log:
-    #     timestamp, src_host, dst_ip, dst_port, bytes_sent = log
-    #     if timestamp <= cutoff:
-    #         continue
-    #     if dst_ip in threat_intel:
-    #         res.add((src_host, dst_ip))
-    # return res
-
 
 
 threat_intel = {

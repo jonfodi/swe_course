@@ -7,7 +7,7 @@ class Cyber():
         self.auth_logs = [] # [ (timestamp, src_ip, username, success: bool) ]
         self.connection_logs = [] # [ (timestamp, src_host, dst_ip, dst_port, bytes_sent)) ]
         self.threat_intel = threat_intel # set of malicious IPs
-        self.ip_attempts = defaultdict(list) # { src_ip: [timestamp] }
+        self.failed_ip_attempts = [] # [ (timestamp, src_ip) ]
         self.malicious_connections = set() # [ (src_ip, malicious_dest_ip) ]
 
         self.ingest_auth_logs(auth_logs)
@@ -23,7 +23,7 @@ class Cyber():
     def record_auth_log(self, auth_log):
         self.auth_logs.append(auth_log)
         if auth_log[3] == False:
-            self.ip_attempts[auth_log[1]].append(auth_log[0])
+            self.failed_ip_attempts.append((auth_log[0], auth_log[1]))
 
     def ingest_conn_logs(self, connection_logs):
         for log in connection_logs:
@@ -34,32 +34,21 @@ class Cyber():
         if conn_log[2] in self.threat_intel:
             self.malicious_connections.add((conn_log[1], conn_log[2]))
 
-
-
-    # question 1: provide every src_ip with over failed_attempts failed login attempts in a given time window 
-    # auth log: (timestamp, src_ip, username, success: bool)
-
-
-    # optimizations 
-    # bisecting - right now were always looping through the whole list to create IP attempts 
-    # we could sort the list and then remove all logs not in the window 
-    # cost: time complexity of the sort 
-    # gain: less than N iterations on auth logs
-    # tiebreaker: size of auth logs (as it gets bigger, the gain outweighs the cost because else we'd be looping through the huge N)
     def failed_attempts_in_window(self, N, now, window):
         cutoff = now - window # 12:00 PM
+        failed_logins = defaultdict(int) # src_ip: count
         res = []
 
-        # dict keys are unique which means we dont need to make res a set 
-        for src_ip, ts in self.ip_attempts.items():
-            failed_attempts_in_window = len(ts) - bisect_left(ts, cutoff)
-            if failed_attempts_in_window >= N:
-                res.append((src_ip, failed_attempts_in_window))
-
-        # tiebreak on src_ip so the ranking is deterministic -- without it the order
-        # of equal counts falls out of dict insertion order, i.e. out of log order
-        res.sort(key=lambda x: (-x[1], x[0]))
-        return res
+        start = bisect_left(self.failed_ip_attempts, cutoff, key=lambda f: f[0])
+        
+        for ts, src_ip in self.failed_ip_attempts[start:]:
+            failed_logins[src_ip] += 1
+       
+        for src_ip, count in failed_logins.items():
+            if count > N:
+                res.append((src_ip, count))
+        
+        return sorted(res, key=lambda x: (-x[1], x[0]))
 
     
     def malicious_ip_connections(self):
@@ -70,4 +59,14 @@ class Cyber():
         
         return res
 
+        # res = set()
+        # cutoff = now - window
+
+        # for log in connection_log:
+        #     timestamp, src_host, dst_ip, dst_port, bytes_sent = log
+        #     if timestamp <= cutoff:
+        #         continue
+        #     if dst_ip in threat_intel:
+        #         res.add((src_host, dst_ip))
+        # return res
 
