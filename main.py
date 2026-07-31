@@ -1,5 +1,7 @@
 from collections import defaultdict 
 from datetime import datetime, timedelta
+from bisect import bisect_right
+
 
 
 # question 1: provide every src_ip with over failed_attempts failed login attempts in a given time window 
@@ -17,9 +19,13 @@ def failed_attempts_in_window(auth_logs,failed_attempts, now, window):
     ip_attempts = defaultdict(int) # src_ip: num_attempts 
     res = []
 
-    for log in auth_logs:
+
+
+    start = bisect_left(auth_logs, cutoff, key=lambda log: log[0])
+
+    for log in auth_logs[start:]:
         timestamp, src_ip, username, success = log
-        if timestamp <= cutoff or success:
+        if success:
             continue
         ip_attempts[src_ip] += 1
 
