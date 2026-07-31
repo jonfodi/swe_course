@@ -11,7 +11,6 @@ what ds do we need to solve this?
 - totally feasible to use multiple like in q1. building a intermediate structure to make the problem easier 
 - also super useful to create ds at write time that will save query time 
     - like in q2 when creating the hash map avoids the need to loop through the whole list 
-
 ## useful stuff 
 # bisection
 used for filtering lists 
