@@ -14,13 +14,11 @@ from bisect import bisect_right
 # cost: time complexity of the sort 
 # gain: less than N iterations on auth logs
 # tiebreaker: size of auth logs (as it gets bigger, the gain outweighs the cost because else we'd be looping through the huge N)
-def failed_attempts_in_window(auth_logs,failed_attempts, now, window):
+def failed_attempts_in_window(auth_logs, failed_attempts, now, window):
     cutoff = now - window                    # 12:00 PM
     ip_attempts = defaultdict(int) # src_ip: num_attempts 
     res = []
-
-
-
+    
     start = bisect_left(auth_logs, cutoff, key=lambda log: log[0])
 
     for log in auth_logs[start:]:
