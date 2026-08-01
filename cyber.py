@@ -50,23 +50,12 @@ class Cyber():
         
         return sorted(res, key=lambda x: (-x[1], x[0]))
 
-    
+
     def malicious_ip_connections(self):
-        res = defaultdict(list) # src_ip: [malicious_ip]
-         
-        for malicious_conn in self.malicious_connections:
-            res[malicious_conn[0]].append(malicious_conn[1])
-        
-        return res
+        # dont return the internal strucutre
+        # return self.malicious_connections
 
-        # res = set()
-        # cutoff = now - window
+        # return a copy 
+        return set(self.malicious_connections)
 
-        # for log in connection_log:
-        #     timestamp, src_host, dst_ip, dst_port, bytes_sent = log
-        #     if timestamp <= cutoff:
-        #         continue
-        #     if dst_ip in threat_intel:
-        #         res.add((src_host, dst_ip))
-        # return res
 

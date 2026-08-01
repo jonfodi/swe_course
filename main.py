@@ -55,27 +55,20 @@ connection_logs = [  # (timestamp, src_host, dst_ip, dst_port, bytes_sent)
     (datetime(2024, 1, 1, 16, 45), "wkstn-088",    "103.224.182.253", 53,      301),
     (datetime(2024, 1, 1, 16, 59), "laptop-jfodi", "185.220.101.44",  9001,   1502),
 ]
+
 cyb = Cyber(auth_logs, connection_logs, threat_intel)
 
 NOW = datetime(2024, 1, 1, 17, 0)
 # window = datetime(2024, 1, 1, 16, 30) # 30 min window
 # # window = datetime(2024, 1, 1, 16, 0) # 1 hour window
 window = timedelta(hours=8) # 8 hour window
-# res = cyb.failed_attempts_in_window(1, NOW, window)
-# print(res)
 
-res2 = cyb.malicious_ip_connections()
-for src_host, malicious_ips in res2.items():
+
+failed_attempts_in_window = cyb.failed_attempts_in_window(1, NOW, window)
+print(failed_attempts_in_window)
+
+malicious_ip_connections = cyb.malicious_ip_connections()
+for src_host, malicious_ips in malicious_ip_connections.items():
     print(f"{src_host}:")
     for ip in malicious_ips:
         print(f"  {ip}")
-# {
-
-    'wkstn-014':     ['45.33.32.156', '185.220.101.44'],
-    'wkstn-022':     ['91.219.236.18'],
-    'wkstn-088':     ['45.33.32.156', '185.220.101.44', '103.224.182.253'],
-    'wkstn-101':     ['91.219.236.18'],
-    'srv-web-01':    ['194.5.249.157'],
-    'wkstn-045':     ['5.188.206.18'],
-
-# }

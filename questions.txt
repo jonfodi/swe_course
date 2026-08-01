@@ -9,7 +9,7 @@
 question 2: provide all src_host that made a connection to a dest_ip in the threat_intel IP list
 data: 
 - connection_log = (timestamp, src_host, dst_ip, dst_port, bytes_sent)
-
+- threat_intel = set of malicious IPs
 
 input: connection_log
 output: [(src_host, dst_ip)] 
