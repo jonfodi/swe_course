@@ -1,4 +1,5 @@
- question 1: provide every src_ip with over N failed login attempts in a given time window 
+QUESTION 1
+ provide every src_ip with over N failed login attempts in a given time window 
  data 
  - auth log: (timestamp, src_ip, username, success: bool)
  ~50M rows/day. ~2M distinct source IPs. ~30k usernames.
@@ -6,10 +7,17 @@
  input: N, auth_logs
  output: src ip: # failed log in attempts > N 
 
-question 2: provide all src_host that made a connection to a dest_ip in the threat_intel IP list
+QUESTION 2
+provide all src_host that made a connection to a dest_ip in the threat_intel IP list
 data: 
 - connection_log = (timestamp, src_host, dst_ip, dst_port, bytes_sent)
 - threat_intel = set of malicious IPs
 
 input: connection_log
 output: [(src_host, dst_ip)] 
+
+
+QUESTION 3
+provide all src, dest pairs that occur at regular intervals. return the interval 
+- this is a batch job not a query
+

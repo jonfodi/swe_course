@@ -1,10 +1,31 @@
 from bisect import bisect_left
 from collections import defaultdict
+from datetime import datetime
+from typing import NamedTuple
+
+
+class AuthLog(NamedTuple):
+    """One authentication attempt.
+
+    Still a tuple -- indexable, sortable, works with bisect -- but the fields
+    have names, so nothing downstream has to remember that index 3 is success.
+    """
+    timestamp: datetime
+    src_ip: str
+    username: str
+    success: bool
 
 
 class Cyber():
+    """The indexes over one org's logs.
+
+    One instance holds one org's data and nothing else, which is what lets the
+    query methods stay unscoped -- there is no other org's data in here to
+    accidentally return.
+    """
+
     def __init__(self, auth_logs, connection_logs, threat_intel):
-        self.auth_logs = [] # [ (timestamp, src_ip, username, success: bool) ]
+        self.auth_logs = [] # [ AuthLog ]
         self.connection_logs = [] # [ (timestamp, src_host, dst_ip, dst_port, bytes_sent)) ]
         self.threat_intel = threat_intel # set of malicious IPs
         self.failed_ip_attempts = [] # [ (timestamp, src_ip) ]
@@ -13,17 +34,17 @@ class Cyber():
         self.ingest_auth_logs(auth_logs)
         self.ingest_conn_logs(connection_logs)
 
-
-    # replay the seed logs through the same path a live log takes, so the
-    # index is built in exactly one place
     def ingest_auth_logs(self, auth_logs):
         for auth_log in auth_logs:
             self.record_auth_log(auth_log)
 
     def record_auth_log(self, auth_log):
-        self.auth_logs.append(auth_log)
-        if auth_log[3] == False:
-            self.failed_ip_attempts.append((auth_log[0], auth_log[1]))
+        # normalise raw tuples at the boundary, so everything past this point
+        # is an AuthLog and can use field names
+        log = AuthLog(*auth_log)
+        self.auth_logs.append(log)
+        if not log.success:
+            self.failed_ip_attempts.append((log.timestamp, log.src_ip))
 
     def ingest_conn_logs(self, connection_logs):
         for log in connection_logs:
@@ -50,7 +71,6 @@ class Cyber():
         
         return sorted(res, key=lambda x: (-x[1], x[0]))
 
-
     def malicious_ip_connections(self):
         # dont return the internal strucutre
         # return self.malicious_connections
@@ -58,4 +78,6 @@ class Cyber():
         # return a copy 
         return set(self.malicious_connections)
 
-
+    def get_auth_logs(self):
+        return list(self.auth_logs)
+    

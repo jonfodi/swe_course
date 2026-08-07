@@ -1,74 +1,77 @@
-from collections import defaultdict 
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
-from bisect import bisect_right
-from cyber import Cyber 
+
+from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.middleware.cors import CORSMiddleware
+
+from auth import CurrentUser, get_current_user
+from cyber import Cyber
+from registry import CyberRegistry
+from sample_data import UnknownOrg, load_org_data
+from schemas import AuthLogOut, WhoAmIOut
+
+# sample data has no wall-clock meaning, so anchor "now" to the log itself
+# instead of datetime.utcnow()
+DEFAULT_NOW = datetime(2024, 1, 1, 17, 0)
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # one registry per process, holding the Cyber instances. on app.state
+    # rather than as a module global so a test can supply its own.
+    app.state.registry = CyberRegistry(load_org_data)
+    yield
 
 
-threat_intel = {
-    "45.33.32.156",
-    "185.220.101.44",
-    "91.219.236.18",
-    "194.5.249.157",
-    "5.188.206.18",
-    "103.224.182.253",
-}
-auth_logs = [
-    (datetime(2024, 1, 1,  8, 41), "10.0.0.5",      "alice",         True),
-    (datetime(2024, 1, 1,  8, 44), "10.0.0.5",      "alice",         True),
-    (datetime(2024, 1, 1,  9, 52), "203.0.113.7",   "admin",         False),
-    (datetime(2024, 1, 1,  9, 53), "203.0.113.7",   "root",          False),
-    (datetime(2024, 1, 1,  9, 55), "203.0.113.7",   "svc_backup",    False),
-    (datetime(2024, 1, 1,  9, 56), "203.0.113.7",   "jsmith",        False),
-    (datetime(2024, 1, 1,  9, 58), "203.0.113.7",   "postgres",      False),
-    (datetime(2024, 1, 1, 10,  0), "203.0.113.7",   "administrator", False),
-    (datetime(2024, 1, 1, 12, 24), "198.51.100.22", "bwong",         False),
-    (datetime(2024, 1, 1, 12, 31), "198.51.100.22", "bwong",         False),
-    (datetime(2024, 1, 1, 12, 42), "198.51.100.22", "bwong",         False),
-    (datetime(2024, 1, 1, 12, 59), "198.51.100.22", "bwong",         False),
-    (datetime(2024, 1, 1, 13, 13), "198.51.100.22", "bwong",         True),
-    (datetime(2024, 1, 1, 15, 50), "192.0.2.15",    "ckim",          False),
-    (datetime(2024, 1, 1, 16,  2), "192.0.2.15",    "ckim",          True),
-    (datetime(2024, 1, 1, 16, 25), "203.0.113.99",  "dpatel",        False),
-    (datetime(2024, 1, 1, 16, 30), "203.0.113.99",  "dpatel",        False),
-    (datetime(2024, 1, 1, 16, 40), "10.0.0.5",      "alice",         True),
-    (datetime(2024, 1, 1, 16, 51), "172.16.4.9",    "svc_deploy",    True),
-    (datetime(2024, 1, 1, 16, 53), "172.16.4.9",    "svc_deploy",    False),
-]
+app = FastAPI(title="Cyber API", lifespan=lifespan)
 
-connection_logs = [  # (timestamp, src_host, dst_ip, dst_port, bytes_sent)
-    (datetime(2024, 1, 1,  8, 15), "wkstn-014",    "45.33.32.156",    443,    8214),
-    (datetime(2024, 1, 1, 11, 59), "wkstn-014",    "185.220.101.44",  9001,    412),
-    (datetime(2024, 1, 1, 12,  0), "wkstn-022",    "91.219.236.18",   443,    1180),
-    (datetime(2024, 1, 1, 12, 30), "wkstn-088",    "45.33.32.156",    443,    4096),
-    (datetime(2024, 1, 1, 12, 33), "wkstn-088",    "45.33.32.156",    443,    4096),
-    (datetime(2024, 1, 1, 12, 35), "wkstn-088",    "45.33.32.156",    443,    2048),
-    (datetime(2024, 1, 1, 13,  5), "wkstn-088",    "185.220.101.44",  9001,    877),
-    (datetime(2024, 1, 1, 13, 40), "srv-db-03",    "10.0.0.200",      5432,  15300),
-    (datetime(2024, 1, 1, 14,  0), "wkstn-101",    "142.250.80.46",   443,   62100),
-    (datetime(2024, 1, 1, 14, 22), "wkstn-101",    "91.219.236.18",   8080,    633),
-    (datetime(2024, 1, 1, 15, 10), "srv-web-01",   "194.5.249.157",   443, 2884109),
-    (datetime(2024, 1, 1, 15, 11), "srv-web-01",   "194.5.249.157",   443, 4102773),
-    (datetime(2024, 1, 1, 16,  0), "wkstn-045",    "5.188.206.18",    6667,    244),
-    (datetime(2024, 1, 1, 16, 30), "wkstn-045",    "52.94.236.248",   443,   18900),
-    (datetime(2024, 1, 1, 16, 45), "wkstn-088",    "103.224.182.253", 53,      301),
-    (datetime(2024, 1, 1, 16, 59), "laptop-jfodi", "185.220.101.44",  9001,   1502),
-]
-
-cyb = Cyber(auth_logs, connection_logs, threat_intel)
-
-NOW = datetime(2024, 1, 1, 17, 0)
-# window = datetime(2024, 1, 1, 16, 30) # 30 min window
-# # window = datetime(2024, 1, 1, 16, 0) # 1 hour window
-window = timedelta(hours=8) # 8 hour window
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["GET"],
+    # includes Authorization, which the browser will not send cross-origin
+    # unless it is allowed here
+    allow_headers=["*"],
+)
 
 
-failed_attempts_in_window = cyb.failed_attempts_in_window(1, NOW, window)
-print(failed_attempts_in_window)
+def get_org_cyber(
+    request: Request,
+    user: CurrentUser = Depends(get_current_user),
+) -> Cyber:
+    """Pick the Cyber instance belonging to whoever is asking.
 
-malicious_ip_connections = cyb.malicious_ip_connections()
-for src_host, malicious_ips in malicious_ip_connections.items():
-    print(f"{src_host}:")
-    for ip in malicious_ips:
-        print(f"  {ip}")
+    org_id comes from the verified credential and nowhere else. Taking it from
+    a query param instead would be an IDOR: change a value in the URL, read
+    somebody else's org.
+    """
+    try:
+        return request.app.state.registry.for_org(user.org_id)
+    except UnknownOrg:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Unknown org") from None
+
+
+@app.get("/api/me", response_model=WhoAmIOut)
+def get_me(user: CurrentUser = Depends(get_current_user)):
+    return user
+
+
+@app.get("/api/failed-attempts")
+def get_failed_attempts(
+    n: int = 1,
+    window_hours: float = 8,
+    now: datetime = DEFAULT_NOW,
+    cyb: Cyber = Depends(get_org_cyber),
+):
+    window = timedelta(hours=window_hours)
+    return cyb.failed_attempts_in_window(n, now, window)
+
+
+@app.get("/api/malicious-connections")
+def get_malicious_connections(cyb: Cyber = Depends(get_org_cyber)):
+    return cyb.malicious_ip_connections()
+
+
+@app.get("/api/auth-logs", response_model=list[AuthLogOut])
+def get_auth_logs(cyb: Cyber = Depends(get_org_cyber)):
+    return cyb.get_auth_logs()
