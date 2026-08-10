@@ -1,6 +1,6 @@
 from bisect import bisect_left
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import NamedTuple
 
 
@@ -26,10 +26,13 @@ class Cyber():
 
     def __init__(self, auth_logs, connection_logs, threat_intel):
         self.auth_logs = [] # [ AuthLog ]
-        self.connection_logs = [] # [ (timestamp, src_host, dst_ip, dst_port, bytes_sent)) ]
+        self.connection_logs = [] # [ (timestamp, src_host, dst_ip, dst_port, bytes_sent)) ], sorted by timestamp 
         self.threat_intel = threat_intel # set of malicious IPs
         self.failed_ip_attempts = [] # [ (timestamp, src_ip) ]
-        self.malicious_connections = set() # [ (src_ip, malicious_dest_ip) ]
+        self.malicious_connections = set() # [ (src_ip, malicious_dest_ip) 
+        self.threat_intel_refresh_interval = timedelta(hours=1)
+        self.new_malicious_connections = set() # [ (src_ip, malicious_dest_ip) ]
+        self.old_malicious_connections = set() # [ (src_ip, malicious_dest_ip) ]
 
         self.ingest_auth_logs(auth_logs)
         self.ingest_conn_logs(connection_logs)
@@ -80,4 +83,43 @@ class Cyber():
 
     def get_auth_logs(self):
         return list(self.auth_logs)
+
+    def ingest_latest_threat_intel(self, latest_threat_intel):
+        self.threat_intel = latest_threat_intel
+        self.refresh_threat_intel(latest_threat_intel)
+
+    def refresh_threat_intel(self, latest_threat_intel: set) -> bool:
+        self.new_malicious_connections.clear()
+        self.old_malicious_connections.clear()
+
+        # update malicious connections 
+        # new - old = left with all the new IPs 
+        # old - new = left with all the stale IPs 
+        new_threats = latest_threat_intel - self.threat_intel
+        removed_threats = self.threat_intel - latest_threat_intel
     
+        
+        # this removes all the old threats. we also need to add the new ones for malicious connections to be accurate
+        for conn in self.malicious_connections:
+            src_ip, curr_malicious_host = conn
+            if curr_malicious_host not in latest_threat_intel:
+                self.malicious_connections.remove(conn)
+                old_malicious_connections.append(src_ip, curr_malicious_host)
+            
+        # add any connections with a new malicious IP to malicious connections
+        # we have a refresh interval of 1 hour so we should bisect the connection logs on that cutoff
+        now = datetime(2024, 1, 1, 17, 0)  # sample data's connection logs top out at 16:59
+        cutoff = now - self.threat_intel_refresh_interval  # e.g. 17:00 - 1hr = 16:00
+        # bisect_left, not bisect_right: entries == cutoff must stay in the window
+        start = bisect_left(self.connection_logs, cutoff, key=lambda f: f[0])
+        
+        for log in self.connection_logs[start:]:
+            timestamp, src_host, dst_ip, dst_port, bytes_sent = log
+            if dst_ip in new_threats: # technically dont need new threats cause if the IP is in the latest threat intel we want it but this saves the write for existing threats that would block anyway cause of the set
+                self.malicious_connections.add((src_host, dst_ip))
+                new_malicious_connections.append((src_host, dst_ip))
+
+
+
+    def get_latest_threat_report(self) -> tuple(set, set):
+        return self.new_malicious_connections, self.old_malicious_connections

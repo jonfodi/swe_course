@@ -16,7 +16,7 @@ class UnknownOrg(KeyError):
 
 # Shared reference data, not tenant data: a threat feed is the same for
 # everyone. frozenset so one org's index can't mutate what the others read.
-THREAT_INTEL = frozenset({
+THREAT_INTEL = set({
     "45.33.32.156",
     "185.220.101.44",
     "91.219.236.18",
