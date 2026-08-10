@@ -49,3 +49,7 @@ window = timedelta(hours=8) # 8 hour window
 
 cyb.ingest_latest_threat_intel(LATEST_THREAT_INTEL)
 
+new_conns, old_conns = cyb.get_latest_threat_report()
+print(new_conns)
+print("$$$$$$$$$$$$$$$$$$$$$$$")
+print(old_conns)
