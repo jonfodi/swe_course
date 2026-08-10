@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 from cyber import Cyber
-from sample_data import AUTH_LOGS, CONNECTION_LOGS, THREAT_INTEL
+from sample_data import AUTH_LOGS, CONNECTION_LOGS, THREAT_INTEL, LATEST_THREAT_INTEL
 
 
 def hey():
@@ -40,9 +40,12 @@ NOW = datetime(2024, 1, 1, 17, 0)
 window = timedelta(hours=8) # 8 hour window
 
 
-failed_attempts_in_window = cyb.failed_attempts_in_window(1, NOW, window)
-print(failed_attempts_in_window)
+# failed_attempts_in_window = cyb.failed_attempts_in_window(1, NOW, window)
+# print(failed_attempts_in_window)
 
-malicious_ip_connections = cyb.malicious_ip_connections()
-for src_host, dst_ip in malicious_ip_connections:
-    print(f"{src_host} -> {dst_ip}")
+# malicious_ip_connections = cyb.malicious_ip_connections()
+# for src_host, dst_ip in malicious_ip_connections:
+#     print(f"{src_host} -> {dst_ip}")
+
+cyb.ingest_latest_threat_intel(LATEST_THREAT_INTEL)
+

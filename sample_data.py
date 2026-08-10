@@ -25,6 +25,46 @@ THREAT_INTEL = set({
     "103.224.182.253",
 })
 
+# The next hourly refresh of the feed. Two IPs retracted as false positives,
+# three added -- one of which nobody has ever talked to.
+#
+#   retracted:  45.33.32.156, 103.224.182.253
+#   added:      142.250.80.46, 52.94.236.248, 77.83.36.9
+#
+# Hand-derived from CONNECTION_LOGS below -- this is what the report *should*
+# say, independent of what the code currently does.
+#
+# acme, new_malicious_connections (connections that were already in history and
+# only became malicious now):
+#   ("wkstn-101", "142.250.80.46")     from 14:00
+#   ("wkstn-045", "52.94.236.248")     from 16:30
+#
+# acme, old_malicious_connections (no longer malicious, must be dropped from
+# malicious_connections):
+#   ("wkstn-014", "45.33.32.156")      from 08:15
+#   ("wkstn-088", "45.33.32.156")      from 12:30 / 12:33 / 12:35, one pair
+#   ("wkstn-088", "103.224.182.253")   from 16:45
+#
+# 77.83.36.9 appears in no connection log, so it contributes nothing -- the
+# normal case for most of a feed update.
+#
+# Note the two timestamps in the new set. Taking NOW as 17:00, the 16:30
+# connection falls inside a one-hour lookback and the 14:00 one does not, so
+# how far back the backfill reaches decides whether both pairs are reported.
+#
+# globex is the asymmetric case: additions only, nothing retracted.
+#   new: ("gbx-srv-mail", "142.250.80.46")   from 14:50
+#   old: (none -- globex never connected to either retracted IP)
+LATEST_THREAT_INTEL = set({
+    "185.220.101.44",
+    "91.219.236.18",
+    "194.5.249.157",
+    "5.188.206.18",
+    "142.250.80.46",
+    "52.94.236.248",
+    "77.83.36.9",
+})
+
 # ---- acme -------------------------------------------------------------------
 
 # (timestamp, src_ip, username, success)
