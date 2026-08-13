@@ -178,6 +178,7 @@ class Cyber():
 
         combined = first_result + second_result + third_result
 
+        # dedup src hosts
         seen = {}
         for host, hops in combined:
             if host not in seen:
