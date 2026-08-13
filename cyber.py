@@ -37,6 +37,7 @@ class Cyber():
         self.new_threats = set() # latest_threats - curr_threats
         # self.connection_timestamps = defaultdict(list) # dest_ip : [ (src_host, timestamp) ]
         self.connection_timestamps = defaultdict(lambda: defaultdict(list)) # dest_ip : { src_host : [ timestamp ] }
+        self.source_connections = defaultdict(lambda: defaultdict(list)) # src_host : { dest_ip : [ timestamp ] }
 
         self.ingest_auth_logs(auth_logs)
         self.ingest_conn_logs(connection_logs)
@@ -63,6 +64,7 @@ class Cyber():
         if dst_ip in self.threat_intel:
             self.malicious_connections.add((src_host, dst_ip))
         self.connection_timestamps[dst_ip][src_host].append(timestamp)
+        self.source_connections[src_host][dst_ip].append(timestamp)
 
     def failed_attempts_in_window(self, N, now, window):
         cutoff = now - window # 12:00 PM
@@ -156,47 +158,83 @@ class Cyber():
         second_result = []
         third_result = []
 
-        for log in self.connection_logs:
-            timestamp, src_host, dst_host, dst_port, bytes_sent = log 
-            # continue if dst_host has numbers? 
-            if src_host == compromised_host:
-                first_result.append((dst_host, 1))
-        
-        if max_hops == 1:
-            return first_result 
-        
+        # {
+        #   dest_ip: { }
+        # 
+        #}
+
+        dest_ip_dict = self.source_connections[compromised_host]
+        first_result = [(dest_ip, 1) for dest_ip in dest_ip_dict]
+
         for res in first_result:
             src_host, hops = res
-            for log in self.connection_logs:
-                timestamp, log_src_host, dst_host, dst_port, bytes_sent = log 
-                if src_host == log_src_host and dst_host != compromised_host:
-                    second_result.append((dst_host, 2))
-        
-        if max_hops == 2:
-            combined = first_result + second_result
+            ip_dict = self.source_connections[src_host]
+            for dest_ip in ip_dict:
+                if dest_ip != compromised_host:
+                    second_result.append((dest_ip, 2))
 
-            # dedup by host, keeping the first (lowest-hop) occurrence
-            seen = {}
-            for host, hops in combined:
-                if host not in seen:
-                    seen[host] = hops
-
-            return list(seen.items())
-            
+      
         for res in second_result:
             src_host, hops = res
-            for log in self.connection_logs:
-                timestamp, log_src_host, dst_host, dst_port, bytes_sent = log 
-                if src_host == log_src_host and dst_host != compromised_host:
-                    third_result.append((dst_host, 3))
+            ip_dict = self.source_connections[src_host]
+            for dest_ip in ip_dict:
+                if dest_ip != compromised_host:
+                    third_result.append((dest_ip, 3))
 
-        if max_hops == 3:
-            combined = first_result + second_result + third_result
+        combined = first_result + second_result + third_result
 
-            # dedup by host, keeping the first (lowest-hop) occurrence
-            seen = {}
-            for host, hops in combined:
-                if host not in seen:
-                    seen[host] = hops
+        seen = {}
+        for host, hops in combined:
+            if host not in seen:
+                seen[host] = hops
 
-            return list(seen.items())
+        print(list(seen.items()))
+
+
+  
+
+
+        # for log in self.connection_logs:
+        #     timestamp, src_host, dst_host, dst_port, bytes_sent = log 
+        #     # continue if dst_host has numbers? 
+        #     if src_host == compromised_host:
+        #         first_result.append((dst_host, 1))
+        
+        # if max_hops == 1:
+        #     return first_result 
+        
+        # for res in first_result:
+        #     src_host, hops = res
+        #     for log in self.connection_logs:
+        #         timestamp, log_src_host, dst_host, dst_port, bytes_sent = log 
+        #         if src_host == log_src_host and dst_host != compromised_host:
+        #             second_result.append((dst_host, 2))
+        
+        # if max_hops == 2:
+        #     combined = first_result + second_result
+
+        #     # dedup by host, keeping the first (lowest-hop) occurrence
+        #     seen = {}
+        #     for host, hops in combined:
+        #         if host not in seen:
+        #             seen[host] = hops
+
+        #     return list(seen.items())
+            
+        # for res in second_result:
+        #     src_host, hops = res
+        #     for log in self.connection_logs:
+        #         timestamp, log_src_host, dst_host, dst_port, bytes_sent = log 
+        #         if src_host == log_src_host and dst_host != compromised_host:
+        #             third_result.append((dst_host, 3))
+
+        # if max_hops == 3:
+        #     combined = first_result + second_result + third_result
+
+        #     # dedup by host, keeping the first (lowest-hop) occurrence
+        #     seen = {}
+        #     for host, hops in combined:
+        #         if host not in seen:
+        #             seen[host] = hops
+
+        #     return list(seen.items())
