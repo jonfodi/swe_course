@@ -47,9 +47,25 @@ window = timedelta(hours=8) # 8 hour window
 # for src_host, dst_ip in malicious_ip_connections:
 #     print(f"{src_host} -> {dst_ip}")
 
-cyb.ingest_latest_threat_intel(LATEST_THREAT_INTEL)
+# cyb.ingest_latest_threat_intel(LATEST_THREAT_INTEL)
 
-new_conns, old_conns = cyb.get_latest_threat_report()
-print(new_conns)
-print("$$$$$$$$$$$$$$$$$$$$$$$")
-print(old_conns)
+# new_conns, old_conns = cyb.get_latest_threat_report()
+# print(new_conns)
+# print("$$$$$$$$$$$$$$$$$$$$$$$")
+# print(old_conns)
+
+cyb.blast_radius("srv_db_03", 2)
+# first_result = [ 
+#   (10.0.0.200, 1)
+#   (srv_legacy_02, 1)
+#   (srv_backup_01, 1)
+
+# second_result = 
+#  srv_vault_01, 2
+#  srv_web_01 , 2
+
+
+# third result 
+# 194.5.249.157, 3
+# 194.5.249.157, 3 
+# wkstn_101  , 3

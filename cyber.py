@@ -2,7 +2,7 @@ from bisect import bisect_left
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import NamedTuple
-from heap import heappush, heappop
+from heapq import heappush, heappop
 
 
 class AuthLog(NamedTuple):
@@ -150,3 +150,53 @@ class Cyber():
                     heappop(heap)
         
         return sorted(heap, reverse=True)
+    
+    def blast_radius(self, compromised_host: str, max_hops: int) -> list[tuple[str, int]]: 
+        first_result = [] # [ (host, hops) ]
+        second_result = []
+        third_result = []
+
+        for log in self.connection_logs:
+            timestamp, src_host, dst_host, dst_port, bytes_sent = log 
+            # continue if dst_host has numbers? 
+            if src_host == compromised_host:
+                first_result.append((dst_host, 1))
+        
+        if max_hops == 1:
+            return first_result 
+        
+        for res in first_result:
+            src_host, hops = res
+            for log in self.connection_logs:
+                timestamp, log_src_host, dst_host, dst_port, bytes_sent = log 
+                if src_host == log_src_host and dst_host != compromised_host:
+                    second_result.append((dst_host, 2))
+        
+        if max_hops == 2:
+            combined = first_result + second_result
+
+            # dedup by host, keeping the first (lowest-hop) occurrence
+            seen = {}
+            for host, hops in combined:
+                if host not in seen:
+                    seen[host] = hops
+
+            return list(seen.items())
+            
+        for res in second_result:
+            src_host, hops = res
+            for log in self.connection_logs:
+                timestamp, log_src_host, dst_host, dst_port, bytes_sent = log 
+                if src_host == log_src_host and dst_host != compromised_host:
+                    third_result.append((dst_host, 3))
+
+        if max_hops == 3:
+            combined = first_result + second_result + third_result
+
+            # dedup by host, keeping the first (lowest-hop) occurrence
+            seen = {}
+            for host, hops in combined:
+                if host not in seen:
+                    seen[host] = hops
+
+            return list(seen.items())

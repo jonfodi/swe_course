@@ -75,41 +75,41 @@ def test_failed_attempts_in_window(logs, n, window, expected):
         pytest.param(
             CONNECTION_LOG, THREAT_INTEL, DAY,
             {
-                ("wkstn-014",    "45.33.32.156"),
-                ("wkstn-014",    "185.220.101.44"),
-                ("wkstn-022",    "91.219.236.18"),
-                ("wkstn-088",    "45.33.32.156"),
-                ("wkstn-088",    "185.220.101.44"),
-                ("wkstn-088",    "103.224.182.253"),
-                ("wkstn-101",    "91.219.236.18"),
-                ("srv-web-01",   "194.5.249.157"),
-                ("wkstn-045",    "5.188.206.18"),
-                ("laptop-jfodi", "185.220.101.44"),
+                ("wkstn_014",    "45.33.32.156"),
+                ("wkstn_014",    "185.220.101.44"),
+                ("wkstn_022",    "91.219.236.18"),
+                ("wkstn_088",    "45.33.32.156"),
+                ("wkstn_088",    "185.220.101.44"),
+                ("wkstn_088",    "103.224.182.253"),
+                ("wkstn_101",    "91.219.236.18"),
+                ("srv_web_01",   "194.5.249.157"),
+                ("wkstn_045",    "5.188.206.18"),
+                ("laptop_jfodi", "185.220.101.44"),
             },
             id="whole_day",
         ),
-        # drops 08:15, 11:59, and wkstn-022 sitting exactly on the 12:00 cutoff
+        # drops 08:15, 11:59, and wkstn_022 sitting exactly on the 12:00 cutoff
         pytest.param(
             CONNECTION_LOG, THREAT_INTEL, H5,
             {
-                ("wkstn-088",    "45.33.32.156"),
-                ("wkstn-088",    "185.220.101.44"),
-                ("wkstn-088",    "103.224.182.253"),
-                ("wkstn-101",    "91.219.236.18"),
-                ("srv-web-01",   "194.5.249.157"),
-                ("wkstn-045",    "5.188.206.18"),
-                ("laptop-jfodi", "185.220.101.44"),
+                ("wkstn_088",    "45.33.32.156"),
+                ("wkstn_088",    "185.220.101.44"),
+                ("wkstn_088",    "103.224.182.253"),
+                ("wkstn_101",    "91.219.236.18"),
+                ("srv_web_01",   "194.5.249.157"),
+                ("wkstn_045",    "5.188.206.18"),
+                ("laptop_jfodi", "185.220.101.44"),
             },
             id="last_5h",
         ),
-        # wkstn-088's beaconing to 45.33.32.156 is now out of range
+        # wkstn_088's beaconing to 45.33.32.156 is now out of range
         pytest.param(
             CONNECTION_LOG, THREAT_INTEL, H2,
             {
-                ("srv-web-01",   "194.5.249.157"),
-                ("wkstn-045",    "5.188.206.18"),
-                ("wkstn-088",    "103.224.182.253"),
-                ("laptop-jfodi", "185.220.101.44"),
+                ("srv_web_01",   "194.5.249.157"),
+                ("wkstn_045",    "5.188.206.18"),
+                ("wkstn_088",    "103.224.182.253"),
+                ("laptop_jfodi", "185.220.101.44"),
             },
             id="last_2h",
         ),
@@ -117,8 +117,8 @@ def test_failed_attempts_in_window(logs, n, window, expected):
         pytest.param(
             CONNECTION_LOG, THREAT_INTEL, MIN30,
             {
-                ("wkstn-088",    "103.224.182.253"),
-                ("laptop-jfodi", "185.220.101.44"),
+                ("wkstn_088",    "103.224.182.253"),
+                ("laptop_jfodi", "185.220.101.44"),
             },
             id="last_30min",
         ),
@@ -126,7 +126,7 @@ def test_failed_attempts_in_window(logs, n, window, expected):
         # feed refreshed down to a single IP -- two different hosts hit it
         pytest.param(
             CONNECTION_LOG, {"185.220.101.44"}, H5,
-            {("wkstn-088", "185.220.101.44"), ("laptop-jfodi", "185.220.101.44")},
+            {("wkstn_088", "185.220.101.44"), ("laptop_jfodi", "185.220.101.44")},
             id="one_ip_feed",
         ),
         pytest.param(CONNECTION_LOG, set(), H5, set(), id="empty_feed"),

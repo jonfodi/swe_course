@@ -86,7 +86,7 @@ def test_queries_are_scoped_without_a_filter_argument(registry):
     globex_hosts = {src for src, _ in registry.for_org("globex").malicious_ip_connections()}
 
     assert acme_hosts & globex_hosts == set()
-    assert all(h.startswith("gbx-") for h in globex_hosts)
+    assert all(h.startswith("gbx_") for h in globex_hosts)
 
 
 def test_mutating_a_returned_result_cannot_corrupt_the_cached_index(registry):

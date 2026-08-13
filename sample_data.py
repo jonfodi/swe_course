@@ -36,14 +36,14 @@ THREAT_INTEL = set({
 #
 # acme, new_malicious_connections (connections that were already in history and
 # only became malicious now):
-#   ("wkstn-101", "142.250.80.46")     from 14:00
-#   ("wkstn-045", "52.94.236.248")     from 16:30
+#   ("wkstn_101", "142.250.80.46")     from 14:00
+#   ("wkstn_045", "52.94.236.248")     from 16:30
 #
 # acme, old_malicious_connections (no longer malicious, must be dropped from
 # malicious_connections):
-#   ("wkstn-014", "45.33.32.156")      from 08:15
-#   ("wkstn-088", "45.33.32.156")      from 12:30 / 12:33 / 12:35, one pair
-#   ("wkstn-088", "103.224.182.253")   from 16:45
+#   ("wkstn_014", "45.33.32.156")      from 08:15
+#   ("wkstn_088", "45.33.32.156")      from 12:30 / 12:33 / 12:35, one pair
+#   ("wkstn_088", "103.224.182.253")   from 16:45
 #
 # 77.83.36.9 appears in no connection log, so it contributes nothing -- the
 # normal case for most of a feed update.
@@ -53,7 +53,7 @@ THREAT_INTEL = set({
 # how far back the backfill reaches decides whether both pairs are reported.
 #
 # globex is the asymmetric case: additions only, nothing retracted.
-#   new: ("gbx-srv-mail", "142.250.80.46")   from 14:50
+#   new: ("gbx_srv_mail", "142.250.80.46")   from 14:50
 #   old: (none -- globex never connected to either retracted IP)
 LATEST_THREAT_INTEL = set({
     "185.220.101.44",
@@ -93,22 +93,29 @@ AUTH_LOGS = [
 
 # (timestamp, src_host, dst_ip, dst_port, bytes_sent)
 CONNECTION_LOGS = [
-    (datetime(2024, 1, 1,  8, 15), "wkstn-014",    "45.33.32.156",    443,    8214),
-    (datetime(2024, 1, 1, 11, 59), "wkstn-014",    "185.220.101.44",  9001,    412),
-    (datetime(2024, 1, 1, 12,  0), "wkstn-022",    "91.219.236.18",   443,    1180),
-    (datetime(2024, 1, 1, 12, 30), "wkstn-088",    "45.33.32.156",    443,    4096),
-    (datetime(2024, 1, 1, 12, 33), "wkstn-088",    "45.33.32.156",    443,    4096),
-    (datetime(2024, 1, 1, 12, 35), "wkstn-088",    "45.33.32.156",    443,    2048),
-    (datetime(2024, 1, 1, 13,  5), "wkstn-088",    "185.220.101.44",  9001,    877),
-    (datetime(2024, 1, 1, 13, 40), "srv-db-03",    "10.0.0.200",      5432,  15300),
-    (datetime(2024, 1, 1, 14,  0), "wkstn-101",    "142.250.80.46",   443,   62100),
-    (datetime(2024, 1, 1, 14, 22), "wkstn-101",    "91.219.236.18",   8080,    633),
-    (datetime(2024, 1, 1, 15, 10), "srv-web-01",   "194.5.249.157",   443, 2884109),
-    (datetime(2024, 1, 1, 15, 11), "srv-web-01",   "194.5.249.157",   443, 4102773),
-    (datetime(2024, 1, 1, 16,  0), "wkstn-045",    "5.188.206.18",    6667,    244),
-    (datetime(2024, 1, 1, 16, 30), "wkstn-045",    "52.94.236.248",   443,   18900),
-    (datetime(2024, 1, 1, 16, 45), "wkstn-088",    "103.224.182.253", 53,      301),
-    (datetime(2024, 1, 1, 16, 59), "laptop-jfodi", "185.220.101.44",  9001,   1502),
+    (datetime(2024, 1, 1,  8, 15), "wkstn_014",    "45.33.32.156",    443,    8214),
+    (datetime(2024, 1, 1,  9,  5), "srv_db_03",    "srv_legacy_02",   445,    3300),
+    (datetime(2024, 1, 1, 11, 59), "wkstn_014",    "185.220.101.44",  9001,    412),
+    (datetime(2024, 1, 1, 12,  0), "wkstn_022",    "91.219.236.18",   443,    1180),
+    (datetime(2024, 1, 1, 12, 30), "wkstn_088",    "45.33.32.156",    443,    4096),
+    (datetime(2024, 1, 1, 12, 33), "wkstn_088",    "45.33.32.156",    443,    4096),
+    (datetime(2024, 1, 1, 12, 35), "wkstn_088",    "45.33.32.156",    443,    2048),
+    (datetime(2024, 1, 1, 13,  5), "wkstn_088",    "185.220.101.44",  9001,    877),
+    (datetime(2024, 1, 1, 13, 40), "srv_db_03",    "10.0.0.200",      5432,  15300),
+    (datetime(2024, 1, 1, 14,  0), "wkstn_101",    "142.250.80.46",   443,   62100),
+    (datetime(2024, 1, 1, 14, 22), "wkstn_101",    "91.219.236.18",   8080,    633),
+    (datetime(2024, 1, 1, 15, 10), "srv_web_01",   "194.5.249.157",   443, 2884109),
+    (datetime(2024, 1, 1, 15, 11), "srv_web_01",   "194.5.249.157",   443, 4102773),
+    (datetime(2024, 1, 1, 15, 12), "srv_web_01",   "srv_db_03",       22,     1840),
+    (datetime(2024, 1, 1, 15, 15), "srv_web_01",   "wkstn_101",       3389,   9600),
+    (datetime(2024, 1, 1, 15, 20), "srv_db_03",    "srv_backup_01",   445,  520400),
+    (datetime(2024, 1, 1, 15, 25), "wkstn_101",    "srv_db_03",       22,      760),
+    (datetime(2024, 1, 1, 15, 35), "srv_backup_01","srv_vault_01",    443,    2100),
+    (datetime(2024, 1, 1, 15, 40), "srv_backup_01","srv_web_01",      443,     980),
+    (datetime(2024, 1, 1, 16,  0), "wkstn_045",    "5.188.206.18",    6667,    244),
+    (datetime(2024, 1, 1, 16, 30), "wkstn_045",    "52.94.236.248",   443,   18900),
+    (datetime(2024, 1, 1, 16, 45), "wkstn_088",    "103.224.182.253", 53,      301),
+    (datetime(2024, 1, 1, 16, 59), "laptop_jfodi", "185.220.101.44",  9001,   1502),
 ]
 
 # ---- globex -----------------------------------------------------------------
@@ -127,11 +134,11 @@ GLOBEX_AUTH_LOGS = [
 ]
 
 GLOBEX_CONNECTION_LOGS = [
-    (datetime(2024, 1, 1,  9, 30), "gbx-wkstn-03", "91.219.236.18",  443,   2210),
-    (datetime(2024, 1, 1, 13, 15), "gbx-wkstn-03", "91.219.236.18",  443,   1904),
-    (datetime(2024, 1, 1, 14, 50), "gbx-srv-mail", "142.250.80.46",  443,  33150),
-    (datetime(2024, 1, 1, 15, 40), "gbx-laptop-7", "5.188.206.18",   6667,    188),
-    (datetime(2024, 1, 1, 16, 20), "gbx-srv-mail", "10.9.0.200",     5432,  74000),
+    (datetime(2024, 1, 1,  9, 30), "gbx_wkstn_03", "91.219.236.18",  443,   2210),
+    (datetime(2024, 1, 1, 13, 15), "gbx_wkstn_03", "91.219.236.18",  443,   1904),
+    (datetime(2024, 1, 1, 14, 50), "gbx_srv_mail", "142.250.80.46",  443,  33150),
+    (datetime(2024, 1, 1, 15, 40), "gbx_laptop_7", "5.188.206.18",   6667,    188),
+    (datetime(2024, 1, 1, 16, 20), "gbx_srv_mail", "10.9.0.200",     5432,  74000),
 ]
 
 # ---- the store ---------------------------------------------------------------
