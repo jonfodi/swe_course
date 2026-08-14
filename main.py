@@ -24,7 +24,7 @@ app = FastAPI(title="Cyber API", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -49,5 +49,8 @@ def get_threat_intel():
     return app.state.cyb.get_threat_intel()
 
 @app.post("/api/latest_threats")
-def update_threat_intel(latest_threat_intel):
-    return app.state.cyb.ingest_latest_threat_intel(latest_threat_intel)
+def update_threat_intel(latest_threat_intel: list[str]):
+    # normalise to a set at the boundary -- ingest does set arithmetic
+    app.state.cyb.ingest_latest_threat_intel(set(latest_threat_intel))
+    # return the new state so the client can write it straight into its cache
+    return app.state.cyb.get_threat_intel()
