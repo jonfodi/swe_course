@@ -78,8 +78,17 @@ class Cyber():
         # return a copy 
         return set(self.malicious_connections)
 
-    def get_auth_logs(self):
-        return list(self.auth_logs)
+    def get_auth_logs(self, src_ip):
+
+        res = []
+        if src_ip is None:
+            return list(self.auth_logs)
+        
+        for log in self.auth_logs:
+            ts, log_src_ip, username, success = log 
+            if src_ip == log_src_ip:
+                res.append(log)
+        return res
 
     def ingest_latest_threat_intel(self, latest_threat_intel):
         self.new_threats = latest_threat_intel - self.threat_intel

@@ -41,5 +41,5 @@ def get_malicious_connections():
 
 
 @app.get("/api/auth-logs", response_model=list[AuthLogOut])
-def get_auth_logs():
-    return app.state.cyb.get_auth_logs()
+def get_auth_logs(src_ip: str | None = None):
+    return app.state.cyb.get_auth_logs(src_ip)

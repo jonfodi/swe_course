@@ -1,10 +1,12 @@
 export interface AuthLogEntry {
-  id: string | number;
-  event: string;
+  timestamp: string;
+  src_ip: string;
+  username: string;
+  success: boolean;
 }
 
 export async function getAuthLogs(): Promise<AuthLogEntry[]> {
-    const res = await fetch('http://localhost:8000/api/auth-logs');
-    if (!res.ok) throw new Error(res.statusText);
-    return res.json();
-  }
+  const res = await fetch('http://localhost:8000/api/auth-logs');
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
