@@ -1,3 +1,11 @@
+const BASE = 'http://localhost:8000/api';
+
+async function get<T>(path: string): Promise<T> {
+  const res = await fetch(`${BASE}${path}`);
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+
 export interface AuthLogEntry {
   timestamp: string;
   src_ip: string;
@@ -5,8 +13,13 @@ export interface AuthLogEntry {
   success: boolean;
 }
 
-export async function getAuthLogs(): Promise<AuthLogEntry[]> {
-  const res = await fetch('http://localhost:8000/api/auth-logs');
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-  return res.json();
-}
+export type FailedAttempt = [src_ip: string, count: number];
+export type MaliciousConnection = [host: string, ip: string];
+
+export const getAuthLogs = () => get<AuthLogEntry[]>('/auth-logs');
+
+export const getMaliciousConnections = () =>
+  get<MaliciousConnection[]>('/malicious-connections');
+
+export const getFailedAttempts = (n: number, windowHours: number) =>
+  get<FailedAttempt[]>(`/failed-attempts?n=${n}&window_hours=${windowHours}`);

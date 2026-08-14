@@ -2,19 +2,21 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAuthLogs } from './api';
 
-export function AuthLogsPage() {
-  const [srcIp, setSrcIp] = useState('');                  // client state
+// CLIENT-SIDE filter: srcIp is NOT in the queryKey, so typing never fetches.
+// One cache entry, one request, filtering happens over data already in memory.
+export function AuthLogs() {
+  const [srcIp, setSrcIp] = useState('');
 
   const { data, status } = useQuery({
-    queryKey: ['authLogs'],                                // no srcIp -> one entry, one fetch
+    queryKey: ['authLogs'],
     queryFn: getAuthLogs,
   });
 
-  const rows = (data ?? []).filter(l => l.src_ip.includes(srcIp));   // derived, never stored
+  const rows = (data ?? []).filter(l => l.src_ip.includes(srcIp)); // derived
 
   return (
-    <>
-      <h1>Auth logs</h1>
+    <section>
+      <h2>Auth logs</h2>
 
       <input
         value={srcIp}
@@ -36,6 +38,6 @@ export function AuthLogsPage() {
           </ul>
         </>
       )}
-    </>
+    </section>
   );
 }

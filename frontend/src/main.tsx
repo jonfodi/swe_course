@@ -1,12 +1,11 @@
-import { createRoot } from 'react-dom/client'
-import './index.css'
+import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthLogsPage } from './AuthLogsPage.tsx';
+import { Dashboard } from './Dashboard';
 
-const queryClient = new QueryClient();                    // ← the memory
+const queryClient = new QueryClient();   // the memory, outside React
 
 createRoot(document.getElementById('root')!).render(
-  <QueryClientProvider client={queryClient}>              
-    <AuthLogsPage />
+  <QueryClientProvider client={queryClient}>
+    <Dashboard />
   </QueryClientProvider>
 );
