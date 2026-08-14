@@ -6,11 +6,6 @@ from heapq import heappush, heappop
 
 
 class AuthLog(NamedTuple):
-    """One authentication attempt.
-
-    Still a tuple -- indexable, sortable, works with bisect -- but the fields
-    have names, so nothing downstream has to remember that index 3 is success.
-    """
     timestamp: datetime
     src_ip: str
     username: str
@@ -18,12 +13,6 @@ class AuthLog(NamedTuple):
 
 
 class Cyber():
-    """The indexes over one org's logs.
-
-    One instance holds one org's data and nothing else, which is what lets the
-    query methods stay unscoped -- there is no other org's data in here to
-    accidentally return.
-    """
 
     def __init__(self, auth_logs, connection_logs, threat_intel):
         self.auth_logs = [] # [ AuthLog ]
@@ -82,7 +71,7 @@ class Cyber():
         
         return sorted(res, key=lambda x: (-x[1], x[0]))
 
-    def get_malicious_ip_connections(self):
+    def malicious_ip_connections(self):
         # dont return the internal strucutre
         # return self.malicious_connections
 
