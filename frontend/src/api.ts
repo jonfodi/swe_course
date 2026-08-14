@@ -18,7 +18,7 @@ export interface AuthLogEntry {
 export type FailedAttempt = [src_ip: string, count: number];
 export type MaliciousConnection = [host: string, ip: string];
 
-export type ThreatIntel = [threat: string]
+export type ThreatIntel = string;
 
 export const getAuthLogs = () => get<AuthLogEntry[]>('/auth-logs');
 

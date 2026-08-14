@@ -22,9 +22,7 @@ export function ThreatIntel() {
       {status === 'error' && <p>Failed to load</p>}
       {status === 'success' && (
         <ul>
-          {data.map(([ip]) => (
-            <li key={ip}>{ip}</li>
-          ))}
+          {data.map(threat => <li key={threat}>{threat}</li>)}
         </ul>
       )}
     </section>
