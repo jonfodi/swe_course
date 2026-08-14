@@ -144,6 +144,7 @@ class Cyber():
         return sorted(heap, reverse=True)
     
     def blast_radius(self, compromised_host: str, max_hops: int) -> list[tuple[str, int]]: 
+
         first_result = [] # [ (host, hops) ]
         second_result = []
         third_result = []
@@ -175,3 +176,8 @@ class Cyber():
                 seen[host] = hops
 
         print(list(seen.items()))
+
+
+    def get_threat_intel(self):
+        return set(self.threat_intel)
+    

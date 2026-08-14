@@ -13,10 +13,16 @@ export interface AuthLogEntry {
   success: boolean;
 }
 
+
+
 export type FailedAttempt = [src_ip: string, count: number];
 export type MaliciousConnection = [host: string, ip: string];
 
+export type ThreatIntel = [threat: string]
+
 export const getAuthLogs = () => get<AuthLogEntry[]>('/auth-logs');
+
+export const getThreatIntel = () => get<ThreatIntel[]>('/threat_intel');
 
 export const getMaliciousConnections = () =>
   get<MaliciousConnection[]>('/malicious-connections');

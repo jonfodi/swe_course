@@ -43,3 +43,11 @@ def get_malicious_connections():
 @app.get("/api/auth-logs", response_model=list[AuthLogOut])
 def get_auth_logs():
     return app.state.cyb.get_auth_logs()
+
+@app.get("/api/threat_intel")
+def get_threat_intel():
+    return app.state.cyb.get_threat_intel()
+
+@app.post("/api/latest_threats")
+def update_threat_intel(latest_threat_intel):
+    return app.state.cyb.ingest_latest_threat_intel(latest_threat_intel)
