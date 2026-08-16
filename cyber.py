@@ -30,7 +30,16 @@ class Cyber():
         self.ingest_auth_logs(auth_logs)
         self.ingest_conn_logs(connection_logs)
 
-        self.cache = defaultdict(list)
+        self.lru_cache = {} # { op_key : { results: {}, lru: [], max_size: int } } cant use defaultdict cause we need to check existence, or dont access by []
+        self.blast_radius_cache_key = "blast_radius"
+        lru_cache = { 
+            self.blast_radius_cache_key : {
+                "cache": {},
+                "lru": [],
+                "max_size": 3
+            }
+        }
+        self.lru_cache = lru_cache
 
     def ingest_auth_logs(self, auth_logs):
         for auth_log in auth_logs:
@@ -144,6 +153,19 @@ class Cyber():
         return sorted(heap, reverse=True)
     
     def blast_radius(self, compromised_host: str, max_hops: int) -> list[tuple[str, int]]: 
+        cache_key = self.blast_radius_cache_key
+        # log read into the cache
+        # evict all entries for the same host 
+        lru = self.lru_cache[cache_key]["lru"]
+        cache = self.lru_cache[cache_key]["cache"]
+        lru = [res for res in lru if res != compromised_host ]
+        lru.append(compromised_host)
+        if len(cache) > self.lru_cache[cache_key]["max_size"]:
+            del lru[0]
+            del cache[(compromised_host, max_hops)]
+        
+        if (compromised_host, max_hops) in cache:
+            return cache[(compromised_host, max_hops)]
         first_result = [] # [ (host, hops) ]
         second_result = []
         third_result = []
@@ -174,8 +196,10 @@ class Cyber():
             if host not in seen:
                 seen[host] = hops
 
+        res = list(seen.items())
+        cache[compromised_host] = (res, max_hops)
+        
         print(list(seen.items()))
-
 
     def get_threat_intel(self):
         return set(self.threat_intel)
