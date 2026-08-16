@@ -12,12 +12,10 @@ from cyber import Cyber
 # instead of datetime.utcnow()
 DEFAULT_NOW = datetime(2024, 1, 1, 17, 0)
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.cyb = Cyber(*load_org_data("acme"))
     yield
-
 
 app = FastAPI(title="Cyber API", lifespan=lifespan)
 
@@ -28,17 +26,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.get("/api/failed-attempts")
 def get_failed_attempts(n: int = 1, window_hours: float = 8, now: datetime = DEFAULT_NOW):
     window = timedelta(hours=window_hours)
     return app.state.cyb.failed_attempts_in_window(n, now, window)
 
-
 @app.get("/api/malicious-connections")
 def get_malicious_connections():
     return app.state.cyb.malicious_ip_connections()
-
 
 @app.get("/api/auth-logs", response_model=list[AuthLogOut])
 def get_auth_logs():

@@ -4,11 +4,11 @@ from collections import defaultdict
 # goal: keep the N most recently used items
 
 class Cache:
-    def __init__(self, fn, capacity=2):
+    def __init__(self, fn):
         self.fn = fn
-        self.results_dict = defaultdict(int) # { (x, y) : (result, results_list_position) }
+        self.results_dict = defaultdict(int) # { (x, y) : result }
         self.recently_seen = [] # [ (x, y) ] 
-        self.capacity = capacity 
+        self.cache_max = 3 
 
     def run(self, *args):
         start_time = time.time()
@@ -19,7 +19,7 @@ class Cache:
     def _run(self, *args):
       self.recently_seen.append(args)
       # evict least recently seen 
-      if len(self.recently_seen) > self.capacity:
+      if len(self.recently_seen) > self.cache_max:
         least_recently_seen = self.recently_seen[0]
         del self.results_dict[least_recently_seen]
         del self.recently_seen[0] # appends are in succession, first element = least recently seen 
@@ -41,8 +41,6 @@ def add(x, y):
     return x + y
 
 cached_fn = Cache(add)
-
-cached_fn = Cache(add, capacity=2)
 
 cached_fn.run(1, 1)
 # [ (1,1) ] 

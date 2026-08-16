@@ -13,7 +13,6 @@ class AuthLog(NamedTuple):
 
 
 class Cyber():
-
     def __init__(self, auth_logs, connection_logs, threat_intel):
         self.auth_logs = [] # [ AuthLog ]
         self.connection_logs = [] # [ (timestamp, src_host, dst_ip, dst_port, bytes_sent)) ], sorted by timestamp 
@@ -30,6 +29,8 @@ class Cyber():
 
         self.ingest_auth_logs(auth_logs)
         self.ingest_conn_logs(connection_logs)
+
+        self.cache = defaultdict(list)
 
     def ingest_auth_logs(self, auth_logs):
         for auth_log in auth_logs:
@@ -131,7 +132,6 @@ class Cyber():
     def get_latest_threat_report(self) -> tuple[set, set]:
         return (set(self.new_malicious_connections), set(self.old_malicious_connections))
 
-    # return the K most 
     def top_k_connections(self, k) -> list:
         heap = []
 
@@ -144,7 +144,6 @@ class Cyber():
         return sorted(heap, reverse=True)
     
     def blast_radius(self, compromised_host: str, max_hops: int) -> list[tuple[str, int]]: 
-
         first_result = [] # [ (host, hops) ]
         second_result = []
         third_result = []
