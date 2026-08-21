@@ -41,6 +41,11 @@ class Cyber():
         }
         self.lru_cache = lru_cache
 
+        self.oldest_value = 0 
+        self.lru_order = defaultdict()
+
+        { value: next_value }
+
     def ingest_auth_logs(self, auth_logs):
         for auth_log in auth_logs:
             self.record_auth_log(auth_log)
@@ -152,20 +157,25 @@ class Cyber():
         
         return sorted(heap, reverse=True)
     
+    # how do we know when to invalidate this cache result 
+    # 2 questions - what data change happens that would invalidate and where does it happen (this is where well wire in)
+    # any new connection to a compromised host would 
     def blast_radius(self, compromised_host: str, max_hops: int) -> list[tuple[str, int]]: 
         cache_key = self.blast_radius_cache_key
         # log read into the cache
         # evict all entries for the same host 
         lru = self.lru_cache[cache_key]["lru"]
         cache = self.lru_cache[cache_key]["cache"]
-        lru = [res for res in lru if res != compromised_host ]
-        lru.append(compromised_host)
-        if len(cache) > self.lru_cache[cache_key]["max_size"]:
-            del lru[0]
-            del cache[(compromised_host, max_hops)]
-        
-        if (compromised_host, max_hops) in cache:
-            return cache[(compromised_host, max_hops)]
+        entry_key = (compromised_host, max_hops)
+        # mutate the stored list in place -- rebinding `lru` here only moved a local name
+        if entry_key in lru:
+            lru.remove(entry_key)
+
+        # when we append also bring the duplicate to the back lof the list
+        lru.append(entry_key)
+
+        if entry_key in cache:
+            return cache[entry_key]
         first_result = [] # [ (host, hops) ]
         second_result = []
         third_result = []
@@ -197,10 +207,18 @@ class Cyber():
                 seen[host] = hops
 
         res = list(seen.items())
-        cache[compromised_host] = (res, max_hops)
-        
-        print(list(seen.items()))
+        cache[entry_key] = res
+
+        # evict the least-recently-used victim, not the entry we just inserted
+        while len(cache) > self.lru_cache[cache_key]["max_size"]:
+            victim = lru.pop(0)
+            del cache[victim]
+
+        return res
 
     def get_threat_intel(self):
         return set(self.threat_intel)
     
+
+    def aggregate(self):
+        

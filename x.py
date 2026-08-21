@@ -1,80 +1,3 @@
-# # d = {
-# #     (1,2): "hi"
-# # }
-
-# # print(d[(1,2)])
-
-
-# z = { "op_key" : ({"input1": "result1", "input2": "result2"}, ['input1', 'input2'], 3) } 
-
-# # op_cache, lru, cache_size = z["op_key"]
-# # print(op_cache)
-# # print(lru)
-# # print(cache_size)
-
-# l = [1,2,"hi"]
-# if "hi" inp l:
-#     l.remove('hi')
-
-# li = [1,2,3]
-# for result inp li:
-#     print(result)
-#     if result == 2:
-#         li.remove(result)
-
-# print(li)
-
-# li.remove(1)
-# print(li)
-
-# s = set()
-# s.add(1)
-# s.add(2)
-# s.add(1)
-# print(s)
-
-# cache = {
-
-#     'x': 1, 
-#     'y': 2,
-#     'z': 3
-# }
-
-# nex - {
-#     'x': 'y', 
-#     'y': 'z',
-#     'z': None
-# }
-
-# # globally init oldest to survive 
-# oldest = None 
-
-# # write to cache 
-# def update_lru(inp):
-#     if len(nex) == 0:
-#         nex[inp] = None   
-    
-    
-# def write_cache(inp, out):
-#     update_lru(inp)
-#     cache[inp] = out
-
-
-
-# def do_some_shit(inp):
-#     # check cache for inp by key 
-#     # if entry exists, res = output
-#     # if doesnt exist, compute the output 
-#     # res = output 
-#     # update cache 
-#         # write to the LRU 
-#         # if the size of the LRU is greater than the max, evict the oldest 
-#             # assuming we have a tag on the oldest. we'd need to then find the inp that comes after it. 
-#             # if we had a inp: next we can look it up. 
-#             # but we'd need to write this data inp. so we need to know which inp preceeded this one when the data comes inp.
-#             # at that time we only have the current inp and the oldest.
-#         # check size of 
-    
 
 cache = {}
 nex = {}
@@ -94,6 +17,37 @@ def add(x, y):
     update_cache((x,y), result, cached)
     return result
 
+def update_ordering():
+    global oldest, newest, before
+    # this is the node after the input. 
+    next = nex[inp] 
+    # this is the node before the input 
+    prev = before[inp]
+    
+    # guards against None (for when input is the oldest / or newest)
+    if prev is not None: 
+        # the previous node had next = input. now its next is input's next. 
+        nex[prev] = next
+    else: 
+        # input was the oldest therefore before[input] = None. set its next to now be None
+        before[next] = None
+    if next is not None:
+        # the next node had before = input. now its before is input's before.
+        before[next] = prev
+
+def evict_lru():
+    global oldest
+    # get the oldest node
+    to_evict = oldest
+    # evict it from cache 
+    del cache[to_evict]
+    # get the next oldest node
+    next_oldest = nex[to_evict]
+    # delete oldest entry from ordering dict 
+    del nex[oldest]
+    # update latest oldest now that we've used previous oldest
+    oldest = next_oldest
+
 def update_cache(inp, result, cached):
     global oldest, newest, before
     # write result of inp to cache {inp: result}
@@ -101,25 +55,12 @@ def update_cache(inp, result, cached):
         print('not cached')
         cache[(inp)] = result 
 
-    # get boolean to determine pointer update 
-    already_exists = inp in nex
-    
-    if already_exists:
-        # update the pointers after duplicate (inputs next becomes its befores next, its before becomes its nexts before)
-        next = nex[inp] 
-        prev = before[inp]
-        before[next] = prev
-        if inp == oldest:
-            previous = None
-        
-        if prev is not None: # for when input is the oldest / lru
-            nex[prev] = next
-        
+    # duplicate inputs. move the input to the newest and update the ordering   
+    # more readable logic for this? maybe inp in cache? cause whats diff between using nex and before   
+    if inp in nex:
+        update_ordering()
         if inp == oldest:
             oldest = next
-        
-        if next is not None:
-            before[next] = previous
 
     # log inp to ordering dict {inp: next_input}
     nex[(inp)] = None  # latest inp (no next yet)
@@ -142,18 +83,7 @@ def update_cache(inp, result, cached):
 
     return
     
-def evict_lru():
-    global oldest
-    # get the oldest node
-    to_evict = oldest
-    # evict it from cache 
-    del cache[to_evict]
-    # get the next oldest node
-    next_oldest = nex[to_evict]
-    # delete oldest entry from ordering dict 
-    del nex[oldest]
-    # update latest oldest now that we've used previous oldest
-    oldest = next_oldest
+
 
 
 add(1,1)
