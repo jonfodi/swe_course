@@ -1,21 +1,9 @@
+from structure import Cache
+cache = Cache(capacity=3, nodes={}, ends=None)
 
-cache = {}
-nex = {}
-before = {} 
-oldest = None
-newest = None 
-max_in = 3
 
-def add(x, y): 
-    result = 0
-    # check for cache hit
-    cached = cache.get((x,y))
-    if cached:
-        result = cached 
-    else:
-        result = x + y # add logic so hidden inp this add fn. need to wrap up the cache shit
-    update_cache((x,y), result, cached)
-    return result
+def add(x, y):
+    return cache.get_or_compute((x, y), lambda: x + y)
 
 def handle_duplicate_entries():
     global oldest, newest, before

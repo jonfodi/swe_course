@@ -2,6 +2,25 @@
 
 One entry per commit, newest first. Entries are keyed by commit subject.
 
+## move the hit/miss decision inside the cache
+2026-08-21
+
+`Cache.get_or_compute` takes a key and a way to compute the value, decides hit
+or miss internally, and returns a result. `add` is one line and never receives a
+miss signal. The module-level dicts are gone from `x.py`.
+
+**Why:** returning a bare value meant `None` had to mean both "not present" and
+"the stored value is None". The caller could not tell them apart, and the
+agreement about which it meant lived in two authors' heads and nowhere in the
+program. Deciding internally removes the signal rather than disambiguating it —
+the check happens on the node, where it was never ambiguous. `None` is now
+cacheable and nothing special handles it.
+
+**Not done:** ordering and eviction. Nodes go in with null links and `ends`
+stays unset, so this is currently an unbounded memo, not an LRU cache. The old
+ordering functions are still in `x.py` and still reference globals that no
+longer exist; they are the reference for rebuilding the write path.
+
 ## store each fact once
 2026-08-21
 

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 Key = tuple[Any, ...]
 
@@ -22,3 +22,11 @@ class Cache:
     capacity: int
     nodes: dict[Key, Node]
     ends: Optional[Ends]
+
+    def get_or_compute(self, key: Key, compute: Callable[[], Any]) -> Any:
+        node = self.nodes.get(key)
+        if node is not None:
+            return node.value
+        value = compute()
+        self.nodes[key] = Node(value=value, prev=None, next=None)
+        return value
