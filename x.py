@@ -79,7 +79,6 @@
 cache = {}
 nex = {}
 before = {} 
-last_input = None
 oldest = None
 newest = None 
 max_in = 3
@@ -92,24 +91,20 @@ def add(x, y):
         result = cached 
     else:
         result = x + y # add logic so hidden inp this add fn. need to wrap up the cache shit
-
     update_cache((x,y), result, cached)
+    return result
 
 def update_cache(inp, result, cached):
-    global oldest, newest, last_input, before
-
+    global oldest, newest, before
     # write result of inp to cache {inp: result}
     if not cached:
         print('not cached')
         cache[(inp)] = result 
 
     # get boolean to determine pointer update 
-    already_exists = nex.get(inp) != None
-
-    # log inp to ordering dict {inp: next_input}
+    already_exists = inp in nex
     
     if already_exists:
-        breakpoint()
         # update the pointers after duplicate (inputs next becomes its befores next, its before becomes its nexts before)
         next = nex[inp] 
         prev = before[inp]
@@ -126,13 +121,9 @@ def update_cache(inp, result, cached):
         if next is not None:
             before[next] = previous
 
-
-
+    # log inp to ordering dict {inp: next_input}
     nex[(inp)] = None  # latest inp (no next yet)
    
-    before[inp] = last_input
-    last_input = inp
-
     # first pass guards / logic  
     if not oldest:
         oldest = inp 
@@ -142,6 +133,7 @@ def update_cache(inp, result, cached):
 
     # set the second newest inp inp ordering dict to point to newest inp {inp: None} -> {inp: latest_input}
     nex[newest] = inp
+    before[inp] = newest
     # now we've made use of 2nd newest, we can update newest inp 
     newest = inp 
 
@@ -172,9 +164,7 @@ print(oldest) # (1,2)
 print(cache) # { (1,1): 2, (1,2): 3, (1,3): 4}
 print(nex) # { (1,1): None, (1,2): (1,3), (1,3): (1,1)}
 print(before) # { (1,1): (1,3), (1,3): (1,2): (1,2): None }
-print(last_input) # (1,1)
 print(oldest) # (1,2)
 print(newest) # 
-# print(last_input)
 # print(oldest) # (1,2)
 # print(newest) # (1,4)
