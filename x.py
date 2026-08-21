@@ -17,7 +17,7 @@ def add(x, y):
     update_cache((x,y), result, cached)
     return result
 
-def update_ordering():
+def handle_duplicate_entries():
     global oldest, newest, before
     # this is the node after the input. 
     next = nex[inp] 
@@ -34,6 +34,9 @@ def update_ordering():
     if next is not None:
         # the next node had before = input. now its before is input's before.
         before[next] = prev
+    
+    if inp == oldest:
+        oldest = next
 
 def evict_lru():
     global oldest
@@ -58,9 +61,7 @@ def update_cache(inp, result, cached):
     # duplicate inputs. move the input to the newest and update the ordering   
     # more readable logic for this? maybe inp in cache? cause whats diff between using nex and before   
     if inp in nex:
-        update_ordering()
-        if inp == oldest:
-            oldest = next
+        handle_duplicate_entries()
 
     # log inp to ordering dict {inp: next_input}
     nex[(inp)] = None  # latest inp (no next yet)
@@ -72,10 +73,12 @@ def update_cache(inp, result, cached):
         newest = inp
         return # weird control flow but safe to return cause this is only happening on the first input
 
-    # set the second newest inp inp ordering dict to point to newest inp {inp: None} -> {inp: latest_input}
+    # newest is the previous input until we update it. 
+    # set the previous inputs next to be the current input 
     nex[newest] = inp
+    # set the current inputs before to be the previous input 
     before[inp] = newest
-    # now we've made use of 2nd newest, we can update newest inp 
+    # update newest 
     newest = inp 
 
     if len(cache) > max_in:
