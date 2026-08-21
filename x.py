@@ -96,22 +96,40 @@ def add(x, y):
     update_cache((x,y), result, cached)
 
 def update_cache(inp, result, cached):
-    global oldest, newest, last_input
+    global oldest, newest, last_input, before
+
+    # write result of inp to cache {inp: result}
     if not cached:
-        # write result of inp to cache {inp: result}
+        print('not cached')
         cache[(inp)] = result 
-        if len(cache) > max_in:
-            evict_lru()
-    # log inp to ordering dict {inp: next_input}
+
+    # get boolean to determine pointer update 
     already_exists = nex.get(inp) != None
-    nex[(inp)] = None  # latest inp (no next yet)
+
+    # log inp to ordering dict {inp: next_input}
+    
     if already_exists:
+        breakpoint()
         # update the pointers after duplicate (inputs next becomes its befores next, its before becomes its nexts before)
         next = nex[inp] 
-        before = before[inp] 
-        nex[before] = next
-        before[next] = before
-    
+        prev = before[inp]
+        before[next] = prev
+        if inp == oldest:
+            previous = None
+        
+        if prev is not None: # for when input is the oldest / lru
+            nex[prev] = next
+        
+        if inp == oldest:
+            oldest = next
+        
+        if next is not None:
+            before[next] = previous
+
+
+
+    nex[(inp)] = None  # latest inp (no next yet)
+   
     before[inp] = last_input
     last_input = inp
 
@@ -120,12 +138,16 @@ def update_cache(inp, result, cached):
         oldest = inp 
     if not newest:
         newest = inp
-        return # weird control flow 
+        return # weird control flow but safe to return cause this is only happening on the first input
 
     # set the second newest inp inp ordering dict to point to newest inp {inp: None} -> {inp: latest_input}
     nex[newest] = inp
     # now we've made use of 2nd newest, we can update newest inp 
     newest = inp 
+
+    if len(cache) > max_in:
+        evict_lru()
+
     return
     
 def evict_lru():
@@ -142,13 +164,17 @@ def evict_lru():
     oldest = next_oldest
 
 
-print(before)
-print(last_input)
 add(1,1)
-# print(cache) # {(1, 1): 2, (1, 2): 3, (1, 3): 4 }
-# print(nex) # { (1, 1): (1, 2): (1,4), (1, 4): None}
-print("=================================================================================")
-print(before)
-print(last_input)
+add(1,2)
+add(1,3)
+add(1,1)
+print(oldest) # (1,2)
+print(cache) # { (1,1): 2, (1,2): 3, (1,3): 4}
+print(nex) # { (1,1): None, (1,2): (1,3), (1,3): (1,1)}
+print(before) # { (1,1): (1,3), (1,3): (1,2): (1,2): None }
+print(last_input) # (1,1)
+print(oldest) # (1,2)
+print(newest) # 
+# print(last_input)
 # print(oldest) # (1,2)
 # print(newest) # (1,4)
