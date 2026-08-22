@@ -35,6 +35,16 @@ class Cache:
         self._evict_until_within_capacity()
         return value
 
+    def order_oldest_first(self) -> list[Key]:
+        keys: list[Key] = []
+        if self.ends is None:
+            return keys
+        key = self.ends.oldest
+        while key is not None:
+            keys.append(key)
+            key = self.nodes[key].next
+        return keys
+
     def _unlink(self, key: Key) -> None:
         node = self.nodes[key]
         prev, next = node.prev, node.next

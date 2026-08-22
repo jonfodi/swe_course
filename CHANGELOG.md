@@ -2,6 +2,26 @@
 
 One entry per commit, newest first. Entries are keyed by commit subject.
 
+## expose the recency order
+2026-08-22
+
+`Cache.order_oldest_first` walks the chain and returns the keys from oldest to
+newest. `x.py` prints it after each call and counts how many times the compute
+function actually ran.
+
+**Why:** the ordering is observable — it decides which key eviction takes — so
+reporting it is part of the interface, not a leak of the representation.
+Exposing `nodes` or `ends` would be the leak; those are storage, and no sequence
+of operations can tell how they are arranged.
+
+Compute counting deliberately stays in `x.py`. The caller supplies the compute
+function, so it already knows exactly when computation happens. Counters on
+`Cache` would record the same fact in a second place, where the two could
+disagree — the problem step 1 removed.
+
+The method name carries the direction because "order" alone does not say which
+end it starts from and both readings are plausible.
+
 ## remove the old cache implementation from x.py
 2026-08-22
 
