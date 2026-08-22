@@ -2,6 +2,26 @@
 
 One entry per commit, newest first. Entries are keyed by commit subject.
 
+## remove the dead guard in the eviction loop
+2026-08-22
+
+Drops `and self.ends is not None` from the eviction loop condition.
+
+**Why:** it can never be false when the loop runs. Eviction is only called at
+the end of the miss path, right after the new node is appended, so every key in
+the dictionary is linked and a non-empty dictionary guarantees the ends marker
+is set. It never fired across 25,000 operations.
+
+Its only possible effect arrives when the invariant is already broken, and then
+it is harmful: the loop exits quietly and leaves the cache permanently over
+capacity with nothing reporting it. Without the guard the next line raises
+`AttributeError` at the operation that caused it. Verified both — behaviour
+unchanged across 25,000 further ops at five capacities, and a deliberately
+corrupted state now raises instead of returning silently.
+
+A guard against a state the invariant forbids does not prevent a failure. It
+converts a loud one into a silent one.
+
 ## record what step 1 taught
 2026-08-22
 

@@ -78,7 +78,7 @@ class Cache:
         self.ends.newest = key
 
     def _evict_until_within_capacity(self) -> None:
-        while len(self.nodes) > self.capacity and self.ends is not None:
+        while len(self.nodes) > self.capacity:
             victim = self.ends.oldest
             self._unlink(victim)
             del self.nodes[victim]
