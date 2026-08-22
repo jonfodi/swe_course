@@ -2,6 +2,34 @@
 
 One entry per commit, newest first. Entries are keyed by commit subject.
 
+## record what step 1 taught
+2026-08-22
+
+Four additions to `from-guards-to-guarantees.md`, all from doing the work
+rather than planning it.
+
+**Where the check can run.** The chain is broken partway through every
+operation, on purpose: unlinking leaves it broken on exit, appending finds it
+broken on entry, and only the whole operation holds at both ends. So the check
+belongs after complete operations and would report failures on correct code if
+placed inside them. Includes the distinction that "the ends marker is unset"
+means the chain is empty, not the cache — true at boundaries, false in between.
+
+**A new section on the same question at a function boundary.** The doc only
+covered enforcement inside a data structure. Returning a value that has to
+signal both "absent" and "the stored value" is the identical problem one level
+out, with a third party silently constrained and a failure mode that degrades
+instead of breaking.
+
+**Two tradeoffs.** A guard against a state the invariant forbids converts a
+loud failure into a silent one. And not re-deriving what the caller already
+knows, which decided two designs after the original collapse.
+
+**The plan is now partly fact.** Step 1 is marked done with what it actually
+produced, including the unpredicted one: non-optional end fields forced the
+chain-became-empty case into the open, and a defensive guard got written anyway
+despite the principle being known.
+
 ## expose the recency order
 2026-08-22
 

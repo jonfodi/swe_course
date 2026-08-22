@@ -85,6 +85,23 @@ This accounts for a branch present in nearly every cache implementation. `if old
 
 **The two requirements are also ordered, not parallel.** Requirement 1 cannot be evaluated until requirement 2 holds, because reading the ordering out of a broken chain loops, raises, or returns a partial sequence, and nothing marks the result as garbage. Intact first. Right answers second.
 
+**The chain is broken partway through every operation, deliberately.** Moving a key to the newest position means disconnecting it and reattaching it, and between those two steps it is in the dictionary but not in the chain. Measured on the implementation:
+
+| | on entry | on exit |
+|---|---|---|
+| unlink a node | intact | **broken** |
+| append to the newest end | **broken** | intact |
+| evict until within capacity | intact | intact |
+| the whole operation | intact | intact |
+
+Only the last row holds at both ends. That is what makes it an operation and the others fragments.
+
+This decides where the check can be called: after complete operations, never inside them. Placed at the end of the unlink step it would report a violation on correct code.
+
+Fragments are not exempt from having contracts — theirs are different. Unlinking promises that the node is no longer reachable from the chain and that nothing else changed. That is checkable. It is not the same property, so one check cannot cover every function.
+
+**One distinction the check has to get right.** "The ends marker is unset" means the chain is empty, which is not the same as the cache being empty. A node can be in the dictionary without being linked. On a cache holding exactly one key, every hit unlinks the only linked node, so the chain empties while the cache still holds its entry. "The ends marker is unset if and only if the cache is empty" is true at operation boundaries and false inside them. A check written against the wrong reading reports failures on correct code.
+
 ---
 
 ## What the compiler checks
@@ -175,6 +192,32 @@ This is not a language feature. Databases call it normalization and the reasonin
 
 ---
 
+## The same question at a function boundary
+
+Everything above concerns properties inside a data structure. The same question appears one level out, between a function and whoever calls it.
+
+A lookup that returns the stored value has to answer two questions with one return value: is the key present, and what is it. If absence is signalled by returning nothing, a key legitimately storing nothing becomes indistinguishable from a key that is missing.
+
+The agreement is:
+
+- nothing returned means the key was absent
+- anything else is the stored value
+- therefore nobody may ever store nothing
+
+The third item is the one worth noticing. It is not a rule about the caller or the callee. It constrains whoever *writes* into the cache, who is not party to the conversation.
+
+**The two checks look identical and test different things.** Inside the lookup, the question is whether a node exists, which is unambiguous — a node is never absent-valued. At the call site, the question is whether the returned value is absent. They give the same answer only because of the unwritten third rule.
+
+**And the failure is silent.** If something does store an absent value, the lookup reports a miss, the caller recomputes, gets the same answer back, and returns it. The answer is still correct. What breaks is that the key never registers as a hit again — the cache quietly stops caching it, with no exception and no wrong output. That survives every test anyone would think to write.
+
+**The resolution is the same move as step 1: remove the signal rather than disambiguate it.** Hand the cache the work to be done and let it decide internally whether to do it. The caller receives a result and never sees a hit-or-miss signal, so there is no agreement left to get wrong, and the determination stays where the check was never ambiguous. Storing nothing becomes ordinary rather than forbidden.
+
+A sentinel value or a returned pair would also work and both are weaker: the caller still has to know to check, and nothing makes it.
+
+This is also one of the places a type system genuinely carries the agreement rather than documenting it. Where a language can express "a value that may be absent" as a distinct type, the value arrives wrapped and the wrapper cannot be opened without addressing the empty case. The obligation travels with the value instead of living in two authors' memories.
+
+---
+
 ## Engineering tradeoffs
 
 **Invariants trade, they do not vanish.** Dropping the linked list removes C and D. Store an access counter with each entry and evict the minimum, and what arrives instead is: the counter must strictly increase and never repeat, and eviction now scans every entry. Add a heap to avoid the scan and you get the heap's ordering property plus a map from key to heap position that must stay in sync with the entries — which is property A again in different clothes.
@@ -184,6 +227,10 @@ Sometimes the replacement set is genuinely smaller. Sometimes it is the same siz
 **Reach for the representation before the language.** The strongest option on the list — the violating state cannot be built — is not a compiler feature. It is a data layout decision, available in Python exactly as in Rust. Step 1 removes three properties with no language help at all. Change the language when you have collapsed what collapses and something important is still left over.
 
 **The language question has a narrower answer space than it appears.** C and D relate the contents of two structures. No mainstream type system expresses that — not Rust's, not Haskell's. If a property of that shape must be guaranteed, the honest options are a check that runs, a component that already handles it, or a proof assistant. "Which language makes this a compile error" has no mainstream answer.
+
+**A guard against a state the invariant forbids makes failures silent.** The eviction loop written here carried an extra condition checking that the ends marker was set. It cannot be false when that loop runs — at that point every key is linked — and across 25,000 operations it never was. Its only possible effect arrives when the invariant is already broken, and then it exits the loop quietly and leaves the cache permanently over capacity. Without it, the next line raises. A defensive guard against an impossible state does not prevent a failure; it converts a loud one into a silent one.
+
+**Do not re-derive what the caller already knows.** Two decisions came from this. A single "move this key to newest" covering both the hit and miss paths would have to work out whether the node is currently linked — but the hit path knows it is and the miss path knows it is not, so a shared version would discard that and recompute it from the data, where the two can disagree. Separately, counting how often the value was actually computed belongs to the caller, which supplies the function being cached; counters inside the cache would record the same fact in a second place. Step 1's rule is not a one-time cleanup. It applies every time code is added.
 
 **The abstract description is not a destination.** The four sentences describing what the cache must do are fixed. They are true before step 1 and after step 5. What moves is the distance to them, and it closes from both ends: the four sentences get stated more precisely, and storage that carries no meaning gets removed. `next`, `prev`, `oldest` and `newest` are bookkeeping for a linked list, not parts of a cache. Each one that goes takes its maintenance requirement with it.
 
@@ -195,16 +242,26 @@ Each step produces a working cache. Rows get filled in as steps are completed.
 
 | Step | Stored | Maintained by hand | Enforced, and by what |
 |---|---|---|---|
-| Now | 3 dictionaries, 2 end variables | A B C D E F G | nothing |
-| 1 | 1 dictionary of records, 1 ends value | C D F G | A B E — cannot be built |
-| 2 | same | G | C D F — a function that runs |
+| before | 3 dictionaries, 2 end variables | A B C D E F G | nothing |
+| **1 — done** | 1 dictionary of records, 1 ends value | C D F G | A B E — cannot be built |
+| 2 | same | G | C D F — a check that runs |
 | 3 | same, annotated | G | plus shape errors — the compiler |
 | 4 | Rust: nodes in one collection, links as positions | G | C D bounded to one module |
 | 5 | not scheduled | — | — |
 
-**1. Store each fact once.** One dictionary of records, one value holding both ends. A, B and E stop existing, and the branches testing for them have no reachable case and get deleted.
+**1. Store each fact once. Done.** One dictionary of records, one value holding both ends. A, B and E became unconstructible and the branches testing for them were deleted rather than moved. The hit-or-miss decision moved inside the cache at the same time, for the reason in the section above.
 
-**2. Write the chain check.** Twenty lines that walk the chain and report whether it is intact, called after every operation. A violation gets reported at the operation that caused it instead of surfacing later somewhere unrelated.
+Three things came out of it that were not predicted:
+
+*The non-optional ends fields did work on their own.* Declaring the two end fields as keys rather than possibly-absent keys meant that when unlinking the last node there was no valid value to store — so the "chain is now empty" case had to be written out explicitly instead of papered over with a null. That case is where this kind of code usually breaks, and the representation surfaced it rather than the author remembering it.
+
+*The rule kept applying.* Not re-deriving what the caller already knows decided two later designs, not just the original collapse. See the tradeoffs above.
+
+*A defensive guard got written anyway.* An impossible-state check went into the eviction loop and had to be caught by reading. Knowing the principle did not prevent the reflex.
+
+**2. Write the chain check.** Twenty lines that walk the chain and report whether it is intact, called after every complete operation — see the constraint on placement above. A violation gets reported at the operation that caused it instead of surfacing later somewhere unrelated.
+
+Most of this already exists twice: as the ad-hoc walk used to verify step 1, and as the method that reports the recency order, which is the same traversal with the assertions removed.
 
 **3. Add type annotations and run a checker.** Find the exact boundary of what a type system catches, by watching it catch shape errors and stay silent on C and D.
 
