@@ -62,9 +62,9 @@ class Cache:
             self.ends = Ends(oldest=key, newest=key)
             return
 
-        # set current newest ()
-        node.prev = self.ends.newest
-        self.nodes[self.ends.newest].next = key
+        previous_newest = self.ends.newest
+        node.prev = previous_newest
+        self.nodes[previous_newest].next = key
         self.ends.newest = key
 
     def _evict_until_within_capacity(self) -> None:

@@ -2,6 +2,23 @@
 
 One entry per commit, newest first. Entries are keyed by commit subject.
 
+## name the pre-state in append
+2026-08-21
+
+`_append_as_newest` reads the previous newest into a local before overwriting
+`ends.newest`.
+
+**Why:** the expression `self.ends.newest` meant the old newest on one line and
+the new one two lines later. The name was stable, the referent was not, and the
+three lines had to run in exactly that order because the last destroyed what
+the first two read — an ordering dependency with nothing marking it. Naming the
+pre-state removes both the double meaning and the ordering dependency; the
+middle lines can now be reordered freely.
+
+Formal specification languages have dedicated notation for the pre-state
+(`old` in Eiffel, primed variables in Z). Python has none, so a local variable
+is the substitute.
+
 ## wire ordering and eviction into the cache
 2026-08-21
 
