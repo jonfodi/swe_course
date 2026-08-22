@@ -2,6 +2,18 @@
 
 One entry per commit, newest first. Entries are keyed by commit subject.
 
+## remove the old cache implementation from x.py
+2026-08-22
+
+Deletes `update_cache`, `handle_duplicate_entries`, `evict_lru` and the prints
+of the old module-level state. `x.py` is now the cache instance, `add`, and a
+few calls.
+
+**Why:** they referenced `nex`, `before`, `oldest`, `newest` and `max_in`, none
+of which existed after the state moved into `Cache`, so `x.py` had not run since
+that switch. The write path they implemented now lives in `Cache` and is
+verified. Preserved at `bc3db76` if the old version is ever wanted.
+
 ## name the pre-state in append
 2026-08-21
 
