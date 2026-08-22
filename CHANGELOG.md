@@ -2,6 +2,37 @@
 
 One entry per commit, newest first. Entries are keyed by commit subject.
 
+## wire ordering and eviction into the cache
+2026-08-21
+
+`get_or_compute` now maintains the recency chain. Three internal operations:
+`_unlink` closes the chain over a node, `_append_as_newest` extends the newest
+end, `_evict_until_within_capacity` drops from the oldest end. A hit unlinks
+then appends; a miss appends then evicts.
+
+**Why:** a single `touch(key)` covering both branches would have to work out
+whether the node is currently linked — which both callers already know. The hit
+branch knows it is, the miss branch knows it isn't. Re-deriving that from the
+data is the same shape as the problem step 1 removed: asking a question you
+already have the answer to, where the two answers can disagree. Neither branch
+tests for anything.
+
+`compute()` still runs before anything is written, so a raising compute leaves
+the chain untouched rather than half-linked.
+
+Making `Ends` fields non-optional in the previous commit paid off here: when
+`_unlink` removes the last node there is no key left to store in `oldest` or
+`newest`, so the "chain became empty" case had to be written explicitly instead
+of papered over with a null.
+
+**Verified:** chain walked after every operation across 3000 random ops, and
+order compared against `OrderedDict` across 3000 more with an exact match.
+Covered: hit on oldest, newest and middle; single-node chain; capacity 0; and
+`compute()` raising.
+
+**Not done:** `x.py` still holds the old ordering functions and trailing prints
+referencing globals that no longer exist, so it does not run.
+
 ## move the hit/miss decision inside the cache
 2026-08-21
 
